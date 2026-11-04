@@ -57,6 +57,7 @@ TOP_A = {"Circulation", "Eur Heart J", "J Clin Oncol", "Ann Oncol", "Gastroenter
          "Hepatology", "Nat Commun", "Am J Respir Crit Care Med", "Eur Urol", "Ann Rheum Dis",
          "Diabetes Care", "Radiology", "Mol Cancer", "J Clin Invest", "Neuron"}
 # OpenAlex 2yr_mean_citedness 문턱. IF와 축척이 달라 실측으로 맞춘 값(파일 아래 주석 참조)
+TIER_S_CITED = 20.0
 TIER_A_CITED = 10.0
 TIER_B_CITED = 6.0
 
@@ -279,7 +280,7 @@ def journal_metric(a, cache):
 def tier_of(a, m):
     ab = a["약어"]
     cited = (m or {}).get("2y") or 0
-    if ab in TOP_S or cited >= 20:
+    if ab in TOP_S or cited >= TIER_S_CITED:
         return "S"
     if ab in TOP_A or ab.startswith(TOP_A_PREFIX) or cited >= TIER_A_CITED:
         return "A"
@@ -362,7 +363,10 @@ def main():
     status["후보"] = sum(p["후보"] for p in items)
     OUT.write_text(json.dumps({
         "생성": NOW.strftime("%Y-%m-%d %H:%M"),
-        "기준": {"A문턱": TIER_A_CITED, "B문턱": TIER_B_CITED, "보관일수": KEEP_DAYS},
+        # 화면의 '등급 기준' 설명이 이 값을 그대로 읽는다 — 기준을 바꾸면 설명도 함께 바뀐다
+        "기준": {"S문턱": TIER_S_CITED, "A문턱": TIER_A_CITED, "B문턱": TIER_B_CITED,
+                 "S저널": sorted(TOP_S), "A저널": sorted(TOP_A), "A접두어": [x.strip() for x in TOP_A_PREFIX],
+                 "보관일수": KEEP_DAYS},
         "상태": status,
         "건수": len(items),
         "논문": items,

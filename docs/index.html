@@ -134,6 +134,10 @@ td{padding:10px 8px;vertical-align:top}
       <b>AI(Claude)가 보도자료 제목과 논문 제목·결론을 비교해</b> 고릅니다 — 행사·수상·출간 같은 보도자료는 붙지 않습니다.
       <b>배포일이 지난 보도자료만</b> 맞춥니다. 표시에 마우스를 올리면 AI가 고른 근거가 보입니다.
     </details>
+    <details id="tier-guide">
+      <summary>S·A·B 등급 기준</summary>
+      <div id="tier-body">불러오는 중…</div>
+    </details>
   </div>
   <div class="views" id="views"></div>
   <div class="stats-row" id="stats"></div>
@@ -216,9 +220,43 @@ async function init() {
   } else {
     $('last-updated').textContent = '아직 수집 결과가 없습니다';
   }
+  renderTierGuide();
   ['date-from', 'date-to', 'dept-filter', 'lead-only'].forEach(id => $(id).addEventListener('change', () => { page = 1; render(); }));
   $('search-input').addEventListener('input', () => { page = 1; render(); });
   render();
+}
+
+// 등급 기준 — research.json의 '기준'(research_radar.py가 쓰는 값 그대로)과
+// 지금 데이터에서 실제로 그 등급을 받은 저널을 보여 준다
+function renderTierGuide() {
+  const g = data?.['기준'];
+  if (!g || g['S문턱'] == null) { $('tier-guide').hidden = true; return; }
+  const P = data['논문'] || [];
+  const seen = {S: new Map(), A: new Map(), B: new Map()};
+  for (const p of P) if (seen[p['등급']]) {
+    const k = p['약어'] || p['저널'];
+    const cur = seen[p['등급']].get(k) || {n: 0, m: p['지표']};
+    cur.n++; seen[p['등급']].set(k, cur);
+  }
+  const top = t => [...seen[t]].sort((a, b) => b[1].n - a[1].n).slice(0, 12)
+    .map(([k, v]) => `${esc(k)} <span style="color:var(--muted)">${v.m != null ? v.m.toFixed(1) : '—'} · ${v.n}편</span>`).join(', ');
+  $('tier-body').innerHTML = `
+    등급은 <b>저널</b>로만 매깁니다. 숫자는 OpenAlex의 <b>최근 2년 평균 피인용</b>(2yr mean citedness)입니다 —
+    IF와 같은 방식으로 계산하지만 값이 IF보다 작게 나옵니다(예: NEJM 33.2, Lancet 21.6).
+    <table>
+      <tr><th>등급</th><th>조건 (하나만 맞으면 됨)</th></tr>
+      <tr><td><span class="tier S">S</span></td><td>최상위 저널: ${g['S저널'].map(esc).join(' · ')}<br>또는 2년 평균 피인용 <b>${g['S문턱']}</b> 이상</td></tr>
+      <tr><td><span class="tier A">A</span></td><td>분야 최상위 저널: ${g['A저널'].map(esc).join(' · ')}<br>
+        저널 가족: ${g['A접두어'].map(x => esc(x) + (/ $|Lancet|JAMA|Nat Rev/.test(x) ? ' …' : '')).join(' · ')}<br>
+        또는 2년 평균 피인용 <b>${g['A문턱']}</b> 이상</td></tr>
+      <tr><td><span class="tier B">B</span></td><td>2년 평균 피인용 <b>${g['B문턱']}</b> 이상</td></tr>
+    </table>
+    <b>보도자료 후보</b>는 S·A 중에서 우리 의료진이 <b>제1·교신·마지막 저자</b>인 연구 논문입니다
+    (댓글·사설·정정 등은 제외). S 저널에 공동저자로만 들어간 논문은 '최상위 저널 참여'로 따로 모읍니다.
+    <div style="margin-top:6px">지금 목록에서 실제로 잡힌 저널 (2년 평균 피인용 · 편수, 많은 순):</div>
+    <div><span class="tier S">S</span> ${top('S') || '—'}</div>
+    <div style="margin-top:3px"><span class="tier A">A</span> ${top('A') || '—'}</div>
+    <div style="margin-top:3px"><span class="tier B">B</span> ${top('B') || '—'}</div>`;
 }
 
 function filtered() {
