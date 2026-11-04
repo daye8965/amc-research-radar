@@ -31,6 +31,8 @@ PRESS_MAX_CANDS = 8
 MODEL = "claude-haiku-5-5"            # 언론 대시보드 AI 판정과 같은 경량 모델
 PRICE_IN, PRICE_OUT = 0.10, 0.50      # 달러 / 100만 토큰
 MAX_CALLS = int(os.environ.get("PRESS_MAX_CALLS", "300") or 300)
+# 프롬프트·판정 규칙을 바꾸면 올린다 — 판이 다른 지난 판정은 다시 묻는다
+JUDGE_VER = 2
 
 SYSTEM = """당신은 서울아산병원 홍보팀을 돕습니다. 병원이 배포한 한국어 보도자료 하나와,
 그 보도자료의 의료진이 저자로 들어간 영어 논문 후보 목록을 받습니다.
@@ -38,17 +40,22 @@ SYSTEM = """당신은 서울아산병원 홍보팀을 돕습니다. 병원이 �
 
 - 보도자료의 주제(질환·치료·기술·연구 대상)가 논문 제목·결론과 같은 연구를 가리킬 때만 고릅니다.
   같은 교수의 같은 분야 논문이라도 다른 연구면 고르지 않습니다.
-- 행사·심포지엄·수상·임명·출간·후원·협약·수술 건수 달성·첫 시행 같은 보도자료는 논문 소개가 아니므로 '없음'입니다.
-- 확신이 없으면 '없음'을 고릅니다. 잘못 붙이는 것이 빠뜨리는 것보다 나쁩니다.
-pmid에는 고른 논문의 PMID를, 없으면 빈 문자열을 넣습니다. 근거는 한 문장으로 씁니다."""
+- 행사·심포지엄·수상·임명·출간·후원·협약·센터 개소 같은 보도자료는 논문 소개가 아니므로 '없음'입니다.
+- 수술·시술 성공 사례, 첫 시행·도입, 누적 건수 달성 보도자료도 대개 '없음'입니다. 같은 분야·같은 술기의
+  논문(동물 실험, 다른 환자 증례, 다른 결과지표)이 후보에 있어도, 그 논문의 결과를 알리는 보도자료가 아니면 고르지 않습니다.
+- 보도자료가 말하는 핵심 결과(무엇을 누구에게 해서 무엇을 보였나)가 논문 제목·결론에 그대로 있어야 '높음'입니다.
+  주제는 비슷하지만 대상·방법·결과 중 하나라도 확인되지 않으면 '보통' 이하입니다.
+- 잘못 붙이는 것이 빠뜨리는 것보다 나쁩니다.
+pmid에는 고른 논문의 PMID를, 없으면 빈 문자열을 넣습니다. 확신은 높음·보통·낮음 중 하나, 근거는 한 문장."""
 
 SCHEMA = {
     "type": "object",
     "properties": {
         "pmid": {"type": "string"},
+        "확신": {"type": "string", "enum": ["높음", "보통", "낮음"]},
         "근거": {"type": "string"},
     },
-    "required": ["pmid", "근거"],
+    "required": ["pmid", "확신", "근거"],
     "additionalProperties": False,
 }
 
@@ -186,7 +193,7 @@ def match_releases(papers, cache, today, status):
                 continue
             cset = sorted(c[3]["pmid"] for c in cands)
             prev = cache.get(key)
-            if prev and prev.get("후보") == cset:
+            if prev and prev.get("후보") == cset and prev.get("판") == JUDGE_VER:
                 new_cache[key] = prev                 # 같은 후보로 이미 물었다
                 kept += 1
                 continue
@@ -200,10 +207,14 @@ def match_releases(papers, cache, today, status):
                     new_cache[key] = prev
                 continue
             asked += 1
-            pmid = re.sub(r"\D", "", ans.get("pmid", ""))
-            if pmid not in cset:
-                pmid = ""                             # 후보 밖 PMID를 지어내면 버린다
-            new_cache[key] = {"pmid": pmid, "후보": cset, "근거": ans.get("근거", "")[:200], "모델": MODEL}
+            pick = re.sub(r"\D", "", ans.get("pmid", ""))
+            if pick not in cset:
+                pick = ""                             # 후보 밖 PMID를 지어내면 버린다
+            sure = ans.get("확신", "")
+            # 확신이 '높음'일 때만 붙인다 — 2026-11-04 첫 실행에서 30건 중 5건이 수술 성공·건수 달성
+            # 보도자료에 같은 분야 다른 논문을 붙인 것이었다
+            new_cache[key] = {"pmid": pick if sure == "높음" else "", "후보": cset, "확신": sure,
+                              "고른것": pick, "근거": ans.get("근거", "")[:200], "모델": MODEL, "판": JUDGE_VER}
     else:
         new_cache = dict(cache)
 
