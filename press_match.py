@@ -171,13 +171,28 @@ class Judge:
         return round((self.tin * PRICE_IN + self.tout * PRICE_OUT) / 1_000_000, 4)
 
 
-def match_releases(papers, cache, today, status):
-    """papers(list) 각각에 p['pr']을 붙이고, 판정 캐시(cache, dict)를 고쳐 돌려준다."""
+def korean_names(papers, releases):
+    """주도 저자 영문 이름 → 한글 이름. 보도자료 의료진 명단에 같은 사람으로 보이는 이름이 **하나뿐**일 때만.
+    동명이인이나 표기가 겹쳐 둘 이상 맞으면 붙이지 않는다(틀린 한글 이름이 영문으로 두는 것보다 나쁘다)."""
+    ko_all = sorted({k for r in releases for k in r["의료진"]})
+    out = {}
+    for en in sorted({a["이름"] for p in papers for a in (p.get("주도저자") or [])}):
+        hits = [k for k in ko_all if same_person(k, en)]
+        if len(hits) == 1:
+            out[en] = hits[0]
+    return out
+
+
+def match_releases(papers, cache, today, status, names=None):
+    """papers(list) 각각에 p['pr']을 붙이고, 판정 캐시(cache, dict)를 고쳐 돌려준다.
+    names(dict)를 주면 주도 저자 영문 → 한글 이름을 채운다(분석 탭)."""
     try:
         releases = load_releases(today)
     except Exception as e:
         status["보도자료"] = f"목록 불러오기 실패 ({type(e).__name__}) — 지난 판정 유지"
         releases = None
+    if releases and names is not None:
+        names.update(korean_names(papers, releases))
 
     by_pmid = {p["pmid"]: p for p in papers}
     judge = Judge()

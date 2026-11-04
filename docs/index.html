@@ -93,6 +93,28 @@ td{padding:10px 8px;vertical-align:top}
 .pr{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap}
 .pr.배포{background:#1a7a3c;color:#fff}
 .pr-title{font-size:12px;color:#1a7a3c;font-weight:600;margin-top:3px}
+/* 목록 / 분석 탭 */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.tab{font-family:var(--font);font-size:14px;font-weight:600;padding:10px 18px;border:none;border-bottom:3px solid transparent;background:none;color:var(--muted);cursor:pointer;margin-bottom:-1px}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.an-sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px}
+.an-sec h2{font-size:15px;font-weight:700;margin-bottom:4px}
+.an-sec .desc{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6}
+.an-sec table{min-width:0}
+.an-sec td{padding:6px 8px;vertical-align:middle;font-size:12px}
+.an-sec td.num{font-family:var(--mono);text-align:right;white-space:nowrap}
+.an-sec th.num{text-align:right}
+.bar{display:flex;align-items:center;gap:6px}
+.bar i{display:block;height:10px;border-radius:2px;min-width:2px}
+.bar span{font-family:var(--mono);font-size:11px;color:var(--text)}
+.an-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.an-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.an-card .label{font-size:10px;color:var(--muted);letter-spacing:.5px;margin-bottom:3px}
+.an-card .value{font-size:20px;font-weight:600;font-family:var(--mono)}
+.more-btn{font-family:var(--font);font-size:12px;margin-top:8px;padding:4px 12px;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--muted);cursor:pointer}
+.more-btn:hover{color:var(--accent);border-color:var(--accent)}
+.en{color:var(--muted);font-size:11px;margin-left:4px}
 .period{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:12px;color:var(--muted)}
 .period b{color:var(--text);font-family:var(--mono);font-weight:500}
 .ai{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap;cursor:help}
@@ -164,10 +186,17 @@ td{padding:10px 8px;vertical-align:top}
       <div id="tier-body">불러오는 중…</div>
     </details>
   </div>
+  <div class="tabs">
+    <button class="tab on" id="tab-list" onclick="setTab('list')">📋 논문 목록</button>
+    <button class="tab" id="tab-an" onclick="setTab('an')">📊 분석</button>
+  </div>
   <div class="period" id="period"></div>
-  <div class="stats-row" id="stats"></div>
-  <div class="table-wrap" id="table"></div>
-  <div class="pagination" id="pag"></div>
+  <div id="list-panel">
+    <div class="stats-row" id="stats"></div>
+    <div class="table-wrap" id="table"></div>
+    <div class="pagination" id="pag"></div>
+  </div>
+  <div id="an-panel" hidden></div>
 </main>
 
 <script>
@@ -181,7 +210,10 @@ let view = 'cand';     // cand 보도자료 후보 · ai AI 보도가치 높음 
 // 열 제목을 눌러 정렬 — 처음 누르면 내림차순, 다시 누르면 오름차순
 let sortCol = 'date', sortAsc = false;
 let page = 1;
-let year = '';         // '' 전체 · '2026' 등 — PubMed 등록일의 연도
+let year = '';
+let tab = 'list';      // list 논문 목록 · an 분석
+let anDeptAll = false, anPeopleAll = false;
+let anPeopleSort = {col: 'n', asc: false};         // '' 전체 · '2026' 등 — PubMed 등록일의 연도
 
 // 진료과는 소속 칸의 영어 이름이라 자주 나오는 것만 우리말로 바꾼다. 없는 건 영어 그대로 둔다
 const DEPT_KO = {
@@ -340,6 +372,14 @@ function filtered() {
 
 function setView(v) { view = v; page = 1; render(); }
 function setYear(y) { year = y; page = 1; render(); }
+function setTab(t) {
+  tab = t;
+  $('tab-list').classList.toggle('on', t === 'list');
+  $('tab-an').classList.toggle('on', t === 'an');
+  $('list-panel').hidden = t !== 'list';
+  $('an-panel').hidden = t !== 'an';
+  render();
+}
 // 정렬 기준. 숫자는 클수록, 문자는 뒤로 갈수록 '내림차순'에서 위에 온다
 const TIER_RANK = {S: 3, A: 2, B: 1};
 const AI_RANK = {'높음': 3, '보통': 2, '낮음': 1};
@@ -424,6 +464,11 @@ function render() {
       `<button class="pill${year === y ? ' on' : ''}" onclick="setYear('${y}')">${y} <span class="n">${years[y].toLocaleString()}</span></button>`).join('');
   const since = newSince();
   const fresh = views.cand.filter(p => (p['등록일'] || '') >= since).length;   // 최근 이틀 새 후보
+  if (tab === 'an') {
+    $('result-count').textContent = '';
+    renderAnalysis(base);
+    return;
+  }
   $('stats').innerHTML = [
     statCard('cand', '⭐ 보도자료 후보', views.cand.length, 'var(--accent)', fresh ? `+${fresh} 새로` : ''),
     statCard('marked', '📣 보도자료 배포', views.marked.length, '#1a7a3c'),
@@ -480,6 +525,131 @@ function render() {
   renderPag(rows.length);
 }
 
+// ── 📊 분석 ─────────────────────────────────────────────────────────────────
+// 대상은 '우리가 주도한 연구 논문'(제1·교신·마지막 저자). 공동저자로만 들어간 논문은 그 과의 실적으로 보기 어렵다.
+// 논문의 대표 진료과 = 주도 저자 중 교신 → 마지막 → 제1 저자의 진료과(없으면 우리 저자 진료과 첫째).
+// 위의 연도·날짜·진료과·검색 필터가 그대로 걸린다.
+const ROLE_ORDER = ['교신', '마지막', '제1'];
+function leadDept(p) {
+  const L = p['주도저자'] || [];
+  for (const r of ROLE_ORDER) {
+    const a = L.find(a => (a['역할'] || []).includes(r) && a['진료과']);
+    if (a) return deptKo(a['진료과']);
+  }
+  return deptKo((p['진료과'] || [])[0] || '') || '(미상)';
+}
+function koName(en) { return data?.['한글이름']?.[en] || ''; }
+function barCell(n, max, color) {
+  const w = max ? Math.round(n / max * 140) : 0;
+  return `<div class="bar"><i style="width:${w}px;background:${color}"></i><span>${n.toLocaleString()}</span></div>`;
+}
+function pct(a, b) { return b ? (a / b * 100).toFixed(1) + '%' : '—'; }
+
+function analysisData(base) {
+  const lead = base.filter(p => p['연구'] && isLead(p));
+  const sa = p => p['등급'] === 'S' || p['등급'] === 'A';
+  const hi = p => p['AI가치']?.['가치'] === '높음';
+  // 진료과별
+  const D = new Map();
+  for (const p of lead) {
+    const k = leadDept(p);
+    const r = D.get(k) || {dept: k, n: 0, sa: 0, hi: 0, pr: 0};
+    r.n++; r.sa += sa(p); r.hi += hi(p); r.pr += !!p.pr;
+    D.set(k, r);
+  }
+  const depts = [...D.values()].sort((a, b) => b.n - a.n || b.pr - a.pr);
+  // 연구자별 — 이름으로 묶는다(동명이인은 합쳐질 수 있음)
+  const M = new Map();
+  for (const p of lead) for (const a of (p['주도저자'] || [])) {
+    const k = a['이름'];
+    if (!k) continue;
+    const r = M.get(k) || {en: k, ko: koName(k), depts: {}, n: 0, first: 0, corr: 0, last: 0, sa: 0, hi: 0, pr: 0};
+    const roles = a['역할'] || [];
+    r.n++; r.first += roles.includes('제1'); r.corr += roles.includes('교신'); r.last += roles.includes('마지막');
+    r.sa += sa(p); r.hi += hi(p); r.pr += !!p.pr;
+    if (a['진료과']) { const d = deptKo(a['진료과']); r.depts[d] = (r.depts[d] || 0) + 1; }
+    M.set(k, r);
+  }
+  const people = [...M.values()].map(r => ({...r,
+    dept: Object.entries(r.depts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—'}));
+  return {lead, depts, people};
+}
+
+const PEOPLE_COLS = {n: '주도 논문', first: '제1저자', corr: '교신', last: '마지막', sa: 'S·A', hi: 'AI 높음', pr: '보도자료'};
+function setPeopleSort(col) {
+  if (anPeopleSort.col === col) anPeopleSort.asc = !anPeopleSort.asc;
+  else anPeopleSort = {col, asc: false};
+  render();
+}
+function renderAnalysis(base) {
+  const {lead, depts, people} = analysisData(base);
+  const total = (k) => depts.reduce((s, d) => s + d[k], 0);
+  const prTotal = total('pr');
+  const maxN = Math.max(1, ...depts.map(d => d.n));
+  const maxPr = Math.max(1, ...depts.map(d => d.pr));
+  const deptRows = anDeptAll ? depts : depts.slice(0, 20);
+  const prDepts = depts.filter(d => d.pr).sort((a, b) => b.pr - a.pr || b.n - a.n);
+
+  const ps = anPeopleSort;
+  const sorted = people.slice().sort((a, b) => (a[ps.col] - b[ps.col]) * (ps.asc ? 1 : -1) || b.n - a.n || b.pr - a.pr);
+  const peopleRows = anPeopleAll ? sorted : sorted.slice(0, 30);
+  const pth = (col) => `<th class="num sortable${ps.col === col ? ' on' : ''}" onclick="setPeopleSort('${col}')">${PEOPLE_COLS[col]}<span class="arrow">${ps.col === col ? (ps.asc ? '▲' : '▼') : '↕'}</span></th>`;
+
+  $('an-panel').innerHTML = `
+    <div class="an-grid">
+      <div class="an-card"><div class="label">우리가 주도한 연구 논문</div><div class="value" style="color:var(--accent)">${lead.length.toLocaleString()}</div></div>
+      <div class="an-card"><div class="label">진료과</div><div class="value" style="color:var(--accent)">${depts.length}</div></div>
+      <div class="an-card"><div class="label">S·A 등급</div><div class="value" style="color:var(--accent)">${total('sa').toLocaleString()}</div></div>
+      <div class="an-card"><div class="label">보도자료 배포</div><div class="value" style="color:#1a7a3c">${prTotal}</div></div>
+      <div class="an-card"><div class="label">주도 연구자</div><div class="value" style="color:var(--accent)">${people.length.toLocaleString()}</div></div>
+    </div>
+
+    <div class="an-sec">
+      <h2>진료과별 논문과 보도자료</h2>
+      <div class="desc">우리 의료진이 제1·교신·마지막 저자인 연구 논문을 <b>대표 진료과</b>(교신 → 마지막 → 제1 저자의 소속 순)로 묶었습니다.
+        논문이 많은데 배포가 없는 과는 아직 찾지 못한 소재가 있을 수 있습니다.</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>진료과</th><th>주도 논문</th><th class="num">S·A</th><th class="num">AI 높음</th><th>보도자료 배포</th><th class="num">배포율</th></tr></thead>
+        <tbody>${deptRows.map(d => `<tr>
+          <td>${esc(d.dept)}</td>
+          <td>${barCell(d.n, maxN, 'var(--accent)')}</td>
+          <td class="num">${d.sa || '—'}</td>
+          <td class="num" style="color:#6a3fb5">${d.hi || '—'}</td>
+          <td>${d.pr ? barCell(d.pr, maxPr, '#1a7a3c') : '<span style="color:var(--muted)">—</span>'}</td>
+          <td class="num">${d.pr ? pct(d.pr, d.n) : '—'}</td></tr>`).join('')}</tbody>
+      </table></div>
+      ${depts.length > 20 ? `<button class="more-btn" onclick="anDeptAll=!anDeptAll;render()">${anDeptAll ? '20개만 보기' : `전체 ${depts.length}개 과 보기`}</button>` : ''}
+    </div>
+
+    <div class="an-sec">
+      <h2>보도자료 배포의 진료과별 분포</h2>
+      <div class="desc">보도자료로 나간 논문 ${prTotal}편이 어느 과에서 나왔는지입니다(위 표의 '보도자료 배포'만 모은 것).</div>
+      ${prDepts.length ? `<table><tbody>${prDepts.map(d => `<tr>
+          <td style="width:180px">${esc(d.dept)}</td>
+          <td>${barCell(d.pr, maxPr, '#1a7a3c')}</td>
+          <td class="num" style="width:120px;color:var(--muted)">${pct(d.pr, prTotal)} · 논문 ${d.n}편 중</td></tr>`).join('')}</tbody></table>`
+        : '<div class="empty" style="padding:20px">이 기간에 보도자료로 나간 논문이 없습니다.</div>'}
+    </div>
+
+    <div class="an-sec">
+      <h2>주도 연구자 (제1·교신·마지막 저자)</h2>
+      <div class="desc">논문 한 편에서 여러 역할을 맡으면 역할마다 셉니다(예: 제1저자이자 교신). 이름은 PubMed 영문 이름이고,
+        <b>보도자료 의료진 명단과 맞는 사람만</b> 한글 이름을 붙였습니다. 교신은 소속 칸에 이메일을 적은 저자로 추정한 값이고,
+        같은 영문 이름의 다른 사람은 합쳐질 수 있습니다. 열 제목을 누르면 정렬됩니다.</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>연구자</th><th>진료과</th>${Object.keys(PEOPLE_COLS).map(pth).join('')}</tr></thead>
+        <tbody>${peopleRows.map(r => `<tr>
+          <td>${r.ko ? `<b>${esc(r.ko)}</b><span class="en">${esc(r.en)}</span>` : esc(r.en)}</td>
+          <td>${esc(r.dept)}</td>
+          <td class="num"><b>${r.n}</b></td><td class="num">${r.first || '—'}</td><td class="num">${r.corr || '—'}</td>
+          <td class="num">${r.last || '—'}</td><td class="num">${r.sa || '—'}</td>
+          <td class="num" style="color:#6a3fb5">${r.hi || '—'}</td>
+          <td class="num" style="color:#1a7a3c">${r.pr || '—'}</td></tr>`).join('')}</tbody>
+      </table></div>
+      ${people.length > 30 ? `<button class="more-btn" onclick="anPeopleAll=!anPeopleAll;render()">${anPeopleAll ? '30명만 보기' : `전체 ${people.length.toLocaleString()}명 보기`}</button>` : ''}
+    </div>`;
+}
+
 function renderPag(n) {
   const total = Math.ceil(n / PAGE_SIZE), el = $('pag');
   if (total <= 1) { el.innerHTML = ''; return; }
@@ -513,6 +683,7 @@ function styleSheet(ws) {
 }
 function downloadExcel() {
   if (!data) return;
+  if (tab === 'an') return downloadAnalysisExcel();
   const {views} = filtered();
   const NAME = {cand: '보도자료 후보', ai: 'AI 보도가치 높음', join: '최상위 저널 참여', marked: '보도자료 배포', all: '전체'};
   const rows = [['등록일', '출판일', '등급', 'IF(JCR)', '2년 피인용(OpenAlex)', '저널', '제목', '우리 저자', '교신(추정)', '제1저자', '마지막저자',
@@ -530,6 +701,22 @@ function downloadExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, styleSheet(ws), NAME[view]);
   XLSX.writeFile(wb, `연구성과_${NAME[view].replace(/ /g, '')}_${$('date-from').value || '처음'}_${$('date-to').value || '오늘'}.xlsx`);
+}
+
+function downloadAnalysisExcel() {
+  const {depts, people} = analysisData(filtered().base);
+  const wb = XLSX.utils.book_new();
+  const d = [['진료과', '주도 논문', 'S·A', 'AI 높음', '보도자료 배포', '배포율(%)']];
+  depts.forEach(r => d.push([r.dept, r.n, r.sa, r.hi, r.pr, r.n ? +(r.pr / r.n * 100).toFixed(1) : 0]));
+  const ws1 = XLSX.utils.aoa_to_sheet(d);
+  ws1['!cols'] = [{wch:24}, {wch:10}, {wch:7}, {wch:8}, {wch:12}, {wch:10}];
+  XLSX.utils.book_append_sheet(wb, styleSheet(ws1), '진료과별');
+  const p = [['연구자(한글)', '연구자(영문)', '진료과', '주도 논문', '제1저자', '교신(추정)', '마지막저자', 'S·A', 'AI 높음', '보도자료']];
+  people.slice().sort((a, b) => b.n - a.n).forEach(r => p.push([r.ko, r.en, r.dept, r.n, r.first, r.corr, r.last, r.sa, r.hi, r.pr]));
+  const ws2 = XLSX.utils.aoa_to_sheet(p);
+  ws2['!cols'] = [{wch:10}, {wch:24}, {wch:20}, {wch:9}, {wch:8}, {wch:9}, {wch:9}, {wch:6}, {wch:8}, {wch:8}];
+  XLSX.utils.book_append_sheet(wb, styleSheet(ws2), '연구자별');
+  XLSX.writeFile(wb, `연구성과_분석_${year || '전체'}_${$('date-from').value || '처음'}_${$('date-to').value || '오늘'}.xlsx`);
 }
 
 init();

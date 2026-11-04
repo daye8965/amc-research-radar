@@ -183,6 +183,7 @@ def parse_article(pa):
     authors = mc.findall("Article/AuthorList/Author")
     n = len(authors)
     amc, first, last, corr, depts = [], False, False, [], []
+    leads = []                                    # 우리 쪽 제1·교신·마지막 저자 — 이름·역할·진료과 (분석 탭)
     for i, au in enumerate(authors):
         name = " ".join(x for x in [au.findtext("ForeName"), au.findtext("LastName")] if x) \
             or au.findtext("CollectiveName") or ""
@@ -202,6 +203,11 @@ def parse_article(pa):
             d = dept_of(a)
             if d and d not in depts:
                 depts.append(d)
+        roles = [r for r, ok in (("제1", i == 0), ("교신", any("@" in a for a in affs)),
+                                 ("마지막", i == n - 1 and n > 1)) if ok]
+        if roles:
+            leads.append({"이름": name, "역할": roles,
+                          "진료과": next((dept_of(a) for a in mine if dept_of(a)), "")})
     if not amc:
         return None                               # 울산대병원·강릉아산병원만 있는 논문
 
@@ -228,6 +234,7 @@ def parse_article(pa):
         "교신": corr[:3],
         "마지막저자": last,
         "진료과": depts[:4],
+        "주도저자": leads[:4],
         "결론": conclusion_of(mc),
     }
 
@@ -395,7 +402,10 @@ def main():
             p.pop("결론", None)                    # 파일 크기 — 등급 밖이고 보도가치도 안 보는 논문의 결론은 안 쓴다
 
     # 결론까지 정리한 뒤에 맞춘다 — 판정에 결론을 보여 준다
-    pr_cache = match_releases(list(papers.values()), pr_cache, NOW.date(), status)
+    names = {}
+    pr_cache = match_releases(list(papers.values()), pr_cache, NOW.date(), status, names)
+    if not names:
+        names = old.get("한글이름", {})          # 보도자료 목록을 못 읽은 날은 지난 것을 쓴다
     value_cache = judge_value(list(papers.values()), value_cache, status)
 
     items = sorted(papers.values(), key=lambda p: (p.get("등록일", ""), p["점수"]), reverse=True)
@@ -414,6 +424,7 @@ def main():
         "저널": jcache,
         "보도자료판정": pr_cache,
         "보도가치": value_cache,
+        "한글이름": names,
     }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     log(json.dumps(status, ensure_ascii=False))
 
