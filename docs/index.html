@@ -561,9 +561,11 @@ function analysisData(base) {
   // 연구자별 — 이름으로 묶는다(동명이인은 합쳐질 수 있음)
   const M = new Map();
   for (const p of lead) for (const a of (p['주도저자'] || [])) {
-    const k = a['이름'];
-    if (!k) continue;
-    const r = M.get(k) || {en: k, ko: koName(k), depts: {}, n: 0, first: 0, corr: 0, last: 0, sa: 0, hi: 0, pr: 0};
+    if (!a['이름']) continue;
+    // 대소문자·붙임표·띄어쓰기만 다른 표기는 같은 사람으로 묶는다(BumSik Hong = Bumsik Hong, Nam-Kug = Namkug)
+    const k = a['이름'].toLowerCase().replace(/[^a-z]/g, '');
+    const r = M.get(k) || {en: a['이름'], ko: koName(a['이름']), depts: {}, n: 0, first: 0, corr: 0, last: 0, sa: 0, hi: 0, pr: 0};
+    if (!r.ko) r.ko = koName(a['이름']);
     const roles = a['역할'] || [];
     r.n++; r.first += roles.includes('제1'); r.corr += roles.includes('교신'); r.last += roles.includes('마지막');
     r.sa += sa(p); r.hi += hi(p); r.pr += !!p.pr;
