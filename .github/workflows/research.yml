@@ -28,13 +28,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install requests google-auth
+      - run: pip install requests anthropic
 
-      - name: PubMed 수집 · 저널 지표 · 보도자료 표시
+      # 보도자료 목록은 언론 대시보드 개발본의 공개 press_releases.json을 읽는다(구글 키 불필요).
+      # 어느 논문인지 고르는 데 Claude를 쓴다 — 키가 없으면 새 판정 없이 지난 판정만 쓴다
+      - name: PubMed 수집 · 저널 지표 · 보도자료 맞추기
+        timeout-minutes: 20
         env:
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-          RESEARCH_SHEET_ID:           ${{ secrets.RESEARCH_SHEET_ID }}
-          NCBI_API_KEY:                ${{ secrets.NCBI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NCBI_API_KEY:      ${{ secrets.NCBI_API_KEY }}
           RESEARCH_DAYS: ${{ github.event.inputs.days || '10' }}
         run: python research_radar.py
 

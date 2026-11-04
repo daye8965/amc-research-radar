@@ -7,13 +7,11 @@
 - 저널 지표: OpenAlex의 2yr_mean_citedness(최근 2년 논문의 평균 피인용 — IF와 같은 정의의 무료 대용치).
   Clarivate IF는 무료 API가 없다. 값이 IF보다 작게 나오는 경향이 있어(Lancet IF 88 → 21.6)
   문턱을 IF 숫자로 생각하면 안 된다.
-- 보도자료 표시: 구글 시트 '연구성과' 탭(PMID · 상태 · 배포일 · 메모)을 서비스 계정으로 읽는다.
-  시트는 RESEARCH_SHEET_ID, 없으면 REPORTER_SHEET_ID(언론 대시보드와 같은 시트).
-  **저장소가 공개라 표시를 저장소 파일에 두지 않는다.** 배포 전 '결정'은 화면에 '검토중'으로만 나가고,
-  배포일이 지나야 '배포'로 바뀐다. 메모는 내보내지 않는다.
+- 보도자료 표시: 우리가 배포한 보도자료 목록(언론 대시보드 개발본의 press_releases.json)과
+  논문을 자동으로 맞춘다(press_match.py). 배포일이 지난 보도자료만 쓴다.
 
 환경변수: RESEARCH_DAYS(기본 10) · RESEARCH_KEEP_DAYS(기본 365) · NCBI_API_KEY · OPENALEX_API_KEY (모두 선택)
-          GOOGLE_SERVICE_ACCOUNT_JSON · RESEARCH_SHEET_ID(또는 REPORTER_SHEET_ID) · RESEARCH_SHEET_RANGE
+          ANTHROPIC_API_KEY(보도자료 판정) · PRESS_URL(보도자료 목록 주소, 기본은 개발 대시보드)
 """
 import json
 import os
@@ -23,9 +21,10 @@ import time
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import quote
 
 import requests
+
+from press_match import match_releases
 
 KST = timezone(timedelta(hours=9))
 NOW = datetime.now(KST)
@@ -207,7 +206,7 @@ def parse_article(pa):
         "유형": [t for t in types if t not in ("Journal Article",)],
         "연구": not any(t in NON_RESEARCH for t in types),
         "저자수": n,
-        "우리저자": amc[:8],
+        "우리저자": amc,                  # 보도자료 의료진과 맞추려면 전원이 필요하다
         "우리저자수": len(amc),
         "제1저자": first,
         "교신": corr[:3],
@@ -309,61 +308,6 @@ def is_candidate(a):
     return a["연구"] and lead and a["등급"] in ("S", "A")
 
 
-# ── 구글 시트의 보도자료 표시 ─────────────────────────────────────────────
-SHEET_RANGE = os.environ.get("RESEARCH_SHEET_RANGE", "").strip() or "'연구성과'!A:D"
-
-
-def norm_date(s):
-    m = re.match(r"(\d{4})\D+(\d{1,2})\D+(\d{1,2})", s or "")
-    return f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}" if m else ""
-
-
-def load_marks(status):
-    """PMID → {상태, 배포일}. 공개 화면에 내보내도 되는 값으로 이미 바꿔서 돌려준다.
-    시트를 못 읽으면 None — 그럴 때는 지난 결과의 표시를 그대로 둔다."""
-    sa_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
-    sheet_id = (os.environ.get("RESEARCH_SHEET_ID", "").strip()
-                or os.environ.get("REPORTER_SHEET_ID", "").strip())
-    if not (sa_json and sheet_id):
-        status["표시"] = "시트 설정 없음 — 지난 표시 유지"
-        return None
-    try:
-        from google.oauth2 import service_account
-        from google.auth.transport.requests import AuthorizedSession
-        creds = service_account.Credentials.from_service_account_info(
-            json.loads(sa_json), scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
-        url = f"https://sheets.googleapis.com/v4/spreadsheets/{sheet_id}/values/{quote(SHEET_RANGE, safe='')}"
-        resp = AuthorizedSession(creds).get(url, timeout=30)
-        resp.raise_for_status()
-        values = resp.json().get("values", [])
-    except Exception as e:
-        status["표시"] = f"시트 불러오기 실패 ({type(e).__name__}) — 지난 표시 유지"
-        return None
-
-    today = NOW.strftime("%Y-%m-%d")
-    marks, bad = {}, 0
-    for row in values:
-        cells = [str(c).strip() for c in row] + ["", "", ""]
-        pmid = re.sub(r"\D", "", cells[0])
-        if not pmid:
-            continue                               # 머리글·빈 줄
-        st, day = cells[1], norm_date(cells[2])
-        if st in ("제외", "보류", "안함", "X", "x"):
-            pub = {"상태": "보류"}
-        elif day and day <= today:
-            pub = {"상태": "배포", "배포일": day}    # 배포일이 지나야 '배포'가 보인다
-        elif st == "배포" and not day:
-            pub = {"상태": "배포"}                 # 이미 나갔다고 적었으면 날짜가 없어도 숨길 게 없다
-        elif st in ("검토", "결정", "배포", "후보", ""):
-            pub = {"상태": "검토중"}               # 배포 전 '결정'은 '검토'와 같은 모양으로만 내보낸다
-        else:
-            bad += 1
-            pub = {"상태": "검토중"}
-        marks[pmid] = pub
-    status["표시"] = f"{len(marks)}건 (알 수 없는 상태값 {bad}건은 검토중으로)"
-    return marks
-
-
 # ── 실행 ──────────────────────────────────────────────────────────────────
 def main():
     old = {}
@@ -374,6 +318,7 @@ def main():
             old = {}
     papers = {p["pmid"]: p for p in old.get("논문", [])}
     jcache = old.get("저널", {})
+    pr_cache = old.get("보도자료판정", {})
     status = {}
 
     end = NOW.date()
@@ -389,9 +334,6 @@ def main():
     else:
         status["수집"] = f"{start}~{end} PubMed {len(pmids)}건 → 우리 저자 {len(fresh)}건"
     for a in fresh:
-        prev = papers.get(a["pmid"])
-        if prev and prev.get("pr"):
-            a["pr"] = prev["pr"]
         papers[a["pmid"]] = a
 
     # 오래된 것 정리 (등록일 기준)
@@ -402,7 +344,6 @@ def main():
     fetch_journal_stats(all_issn, jcache)
     jcache = {k: v for k, v in jcache.items() if k in set(all_issn)}
 
-    marks = load_marks(status)
     for p in papers.values():
         m = journal_metric(p, jcache)
         p["지표"] = m["2y"] if m else None
@@ -413,11 +354,9 @@ def main():
         p["참여"] = (not p["후보"]) and p["연구"] and p["등급"] == "S"
         if not p["등급"]:
             p.pop("결론", None)                    # 파일 크기 — 등급 밖 논문의 초록 결론은 안 쓴다
-        if marks is not None:
-            if p["pmid"] in marks:
-                p["pr"] = marks[p["pmid"]]
-            else:
-                p.pop("pr", None)
+
+    # 결론까지 정리한 뒤에 맞춘다 — 판정에 결론을 보여 준다
+    pr_cache = match_releases(list(papers.values()), pr_cache, NOW.date(), status)
 
     items = sorted(papers.values(), key=lambda p: (p.get("등록일", ""), p["점수"]), reverse=True)
     status["후보"] = sum(p["후보"] for p in items)
@@ -428,6 +367,7 @@ def main():
         "건수": len(items),
         "논문": items,
         "저널": jcache,
+        "보도자료판정": pr_cache,
     }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     log(json.dumps(status, ensure_ascii=False))
 
