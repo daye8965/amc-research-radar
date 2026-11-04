@@ -1,0 +1,49 @@
+name: 연구성과 수집
+
+on:
+  schedule:
+    # GitHub 예약 실행은 2~4시간 40분 밀린다(언론 대시보드 2026-10~11 실측).
+    # PubMed 등록은 미국 시간 기준이라 서두를 필요는 없지만, 아침 업무 전에 갱신되도록 앞당겨 둔다
+    - cron: "40 17 * * *"   # KST 02:40 → 실제로는 05~07시
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "최근 며칠치를 다시 훑을지 (처음 채우기는 365)"
+        required: false
+        default: "10"
+
+concurrency:
+  group: research-data
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests google-auth
+
+      - name: PubMed 수집 · 저널 지표 · 보도자료 표시
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          RESEARCH_SHEET_ID:           ${{ secrets.RESEARCH_SHEET_ID }}
+          NCBI_API_KEY:                ${{ secrets.NCBI_API_KEY }}
+          RESEARCH_DAYS: ${{ github.event.inputs.days || '10' }}
+        run: python research_radar.py
+
+      - name: 변경사항 커밋 & 푸시
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git diff --staged --quiet && { echo "변경 없음"; exit 0; }
+          git commit -m "자동 수집 $(date +'%Y-%m-%d')"
+          git pull --rebase --autostash origin main
+          git push
