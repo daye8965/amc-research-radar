@@ -227,6 +227,8 @@ function deptKo(d) {
 function esc(t) {
   return String(t ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
+// 'YYYY-MM-DD' → 'YYYY.MM.DD' — 해가 넘어가며 쌓이니 연도까지 보인다
+function ymd(d) { return (d || '').replace(/-/g, '.'); }
 function isLead(p) { return !!(p['제1저자'] || p['마지막저자'] || (p['교신'] || []).length); }
 const $ = id => document.getElementById(id);
 
@@ -383,7 +385,7 @@ function prBadge(p) {
   if (!p.pr) return '';
   const why = prWhy(p);
   return `<span class="pr 배포" title="${esc(p.pr['보도자료'] || '')}${why ? '&#10;&#10;AI 근거: ' + esc(why) : ''}">📣 배포</span>`
-    + `<div class="td-date" style="margin-top:2px">${(p.pr['배포일'] || '').slice(5).replace('-', '/')}</div>`;
+    + `<div class="td-date" style="margin-top:2px">${ymd(p.pr['배포일'])}</div>`;
 }
 // AI가 이 논문을 고른 근거 — research.json의 보도자료판정에 남아 있다
 function prWhy(p) {
@@ -444,7 +446,7 @@ function render() {
   const showConcl = view !== 'all';
   $('table').innerHTML = `<table>
     <thead><tr>
-      ${th('date', '등록', '64px', 'PubMed 등록일')}
+      ${th('date', '등록', '80px', 'PubMed 등록일')}
       ${th('tier', '등급', '52px', 'S → A → B, 같은 등급은 IF·피인용 순')}
       ${th('metric', '저널', '150px', 'IF·피인용 순')}
       <th>논문</th>
@@ -452,7 +454,7 @@ function render() {
       ${th('dept', '진료과', '100px')}
       ${th('ai', 'AI 보도가치', '150px', 'Claude가 일반 언론 보도 소재로서의 힘을 판단 (우리가 주도한 연구 논문만)')}
       <th style="width:72px">PMID</th>
-      ${th('pr', '보도자료', '70px', '배포일 순')}
+      ${th('pr', '보도자료', '80px', '배포일 순')}
     </tr></thead>
     <tbody>${slice.map(p => {
       const roles = [p['제1저자'] && '제1', (p['교신'] || []).length && '교신', p['마지막저자'] && '마지막']
@@ -462,7 +464,7 @@ function render() {
       const more = (p['우리저자수'] || 0) > 3 ? ` 외 ${p['우리저자수'] - 3}명` : '';
       const types = (p['유형'] || []).filter(t => /Review|Trial|Meta-Analysis|Comment|Letter|Editorial/.test(t));
       return `<tr>
-        <td class="td-date">${since && (p['등록일'] || '') >= since ? '<span class="new">NEW</span><br>' : ''}${(p['등록일'] || '').slice(5).replace('-', '/')}</td>
+        <td class="td-date">${since && (p['등록일'] || '') >= since ? '<span class="new">NEW</span><br>' : ''}${ymd(p['등록일'])}</td>
         <td>${p['등급'] ? `<span class="tier ${p['등급']}">${p['등급']}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
         <td class="journal">${esc(p['약어'] || p['저널'])}<span class="m${p['IF'] != null ? ' if' : ''}" title="${p['IF'] != null ? `JCR IF · 분야 상위 ${p['IF상위']}%` : 'OpenAlex 최근 2년 평균 피인용 (JCR IF 아님)'}">${metricLabel(p)}</span></td>
         <td class="td-title"><a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/" target="_blank" rel="noopener">${esc(p['제목'])}</a>${types.length ? `<span class="types">${types.map(esc).join(' · ')}</span>` : ''}
