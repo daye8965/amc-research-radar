@@ -52,7 +52,8 @@ def main(paths):
     years = sorted({r["연도"] for r in table.values()})
     OUT.write_text(json.dumps({"출처": "Clarivate JCR (S2Journal, 울산대학교 아산의학도서관)",
                                "연도": years, "건수": len(table), "저널": table},
-                              ensure_ascii=False, indent=0), encoding="utf-8")
+                              ensure_ascii=False, indent=0), encoding="utf-8", newline="
+")
     print(f"PDF에서 {len(new)}개 · 새로 {added}개 · 합계 {len(table)}개 → {OUT}")
     return 0
 
