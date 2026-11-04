@@ -345,6 +345,25 @@ def is_candidate(a):
     return a["연구"] and lead and a["등급"] in ("S", "A")
 
 
+# ── 한글 이름 직접 지정 ──────────────────────────────────────────────────
+# 자동 매칭(보도자료 의료진 명단)으로 못 잡는 교수의 한글 이름을 사람이 적는 파일. 자동보다 우선한다.
+# 진료과를 적으면 그 과일 때만 붙인다 — Won Kim·Jiwon Jung처럼 흔한 영문 이름의 다른 사람에게 붙지 않게.
+MANUAL_NAMES = Path("names_manual.csv")
+
+
+def load_manual_names():
+    import csv
+    if not MANUAL_NAMES.exists():
+        return []
+    out = []
+    with MANUAL_NAMES.open(encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            en, ko = (row.get("영문") or "").strip(), (row.get("한글") or "").strip()
+            if en and ko:
+                out.append({"영문": en, "한글": ko, "진료과": (row.get("메모") or "").strip()})
+    return out
+
+
 # ── 실행 ──────────────────────────────────────────────────────────────────
 def main():
     old = {}
@@ -425,6 +444,7 @@ def main():
         "보도자료판정": pr_cache,
         "보도가치": value_cache,
         "한글이름": names,
+        "한글이름수동": load_manual_names(),
     }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     log(json.dumps(status, ensure_ascii=False))
 

@@ -555,7 +555,13 @@ function leadDept(p) {
   }
   return deptKo((p['진료과'] || [])[0] || '') || '(미상)';
 }
-function koName(en) { return data?.['한글이름']?.[en] || ''; }
+// 영문 → 한글 이름. 사람이 적은 것(names_manual.csv, 진료과가 맞을 때만)이 먼저, 그다음 보도자료 명단 자동 매칭
+function koName(en, deptEn = '') {
+  const k = (en || '').toLowerCase().replace(/[^a-z]/g, '');
+  const m = (data?.['한글이름수동'] || []).find(m => m['영문'].toLowerCase().replace(/[^a-z]/g, '') === k);
+  if (m && (!m['진료과'] || !deptEn || m['진료과'] === deptKo(deptEn))) return m['한글'];
+  return data?.['한글이름']?.[en] || '';
+}
 function pct(a, b) { return b ? (a / b * 100).toFixed(1) + '%' : '—'; }
 
 function analysisData(base) {
@@ -576,9 +582,9 @@ function analysisData(base) {
     if (!a['이름']) continue;
     // 대소문자·붙임표·띄어쓰기만 다른 표기는 같은 사람으로 묶는다(BumSik Hong = Bumsik Hong, Nam-Kug = Namkug)
     const k = a['이름'].toLowerCase().replace(/[^a-z]/g, '');
-    const r = M.get(k) || {key: k, en: a['이름'], ko: koName(a['이름']), depts: {}, n: 0, first: 0, corr: 0, last: 0,
+    const r = M.get(k) || {key: k, en: a['이름'], ko: koName(a['이름'], a['진료과']), depts: {}, n: 0, first: 0, corr: 0, last: 0,
                            sa: 0, hi: 0, pr: 0, list: [], roles: new Map()};
-    if (!r.ko) r.ko = koName(a['이름']);
+    if (!r.ko) r.ko = koName(a['이름'], a['진료과']);
     const roles = a['역할'] || [];
     r.n++; r.first += roles.includes('제1'); r.corr += roles.includes('교신'); r.last += roles.includes('마지막');
     r.sa += AN_PICK.sa(p); r.hi += AN_PICK.hi(p); r.pr += AN_PICK.pr(p);
@@ -586,9 +592,14 @@ function analysisData(base) {
     if (a['진료과']) { const d = deptKo(a['진료과']); r.depts[d] = (r.depts[d] || 0) + 1; }
     M.set(k, r);
   }
-  const people = [...M.values()].map(r => ({...r,
-    name: r.ko || r.en,
-    dept: Object.entries(r.depts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—'}));
+  // 사람이 직접 적은 한글 이름(names_manual.csv)이 자동 매칭보다 우선. 진료과를 적었으면 그 과일 때만
+  const manual = new Map((data?.['한글이름수동'] || []).map(m => [m['영문'].toLowerCase().replace(/[^a-z]/g, ''), m]));
+  const people = [...M.values()].map(r => {
+    const dept = Object.entries(r.depts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+    const m = manual.get(r.key);
+    const ko = m && (!m['진료과'] || m['진료과'] === dept) ? m['한글'] : r.ko;
+    return {...r, ko, name: ko || r.en, dept};
+  });
   return {lead, depts, people};
 }
 
@@ -732,7 +743,7 @@ function anOpen(which, i, pick) {
       <td class="td-title"><a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/" target="_blank" rel="noopener">${esc(p['제목'])}</a>
         ${p.pr ? `<div class="pr-title">📣 ${esc(p.pr['보도자료'])} <span class="td-date">${ymd(p.pr['배포일'])}</span></div>` : ''}
         ${p['AI가치']?.['한줄'] && p['AI가치']['가치'] !== '낮음' ? `<div class="ai-line">${esc(p['AI가치']['한줄'])}</div>` : ''}</td>
-      <td class="authors">${(p['주도저자'] || []).map(a => `${esc(koName(a['이름']) || a['이름'])} <span class="role">${(a['역할'] || []).join('·')}</span>`).join('<br>')}</td>
+      <td class="authors">${(p['주도저자'] || []).map(a => `${esc(koName(a['이름'], a['진료과']) || a['이름'])} <span class="role">${(a['역할'] || []).join('·')}</span>`).join('<br>')}</td>
       <td>${aiCell(p).split('<div')[0]}</td></tr>`).join('')}</tbody></table>`;
   $('modal').hidden = false;
   $('modal-body').scrollTop = 0;
