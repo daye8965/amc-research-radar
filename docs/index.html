@@ -232,43 +232,11 @@ let year = '';         // '' 전체 · '2026' 등 — PubMed 등록일의 연도
 let tab = 'list';      // list 논문 목록 · an 분석
 let anDeptAll = false, anPeopleAll = false;
 
-// 진료과는 소속 칸의 영어 이름이라 자주 나오는 것만 우리말로 바꾼다. 없는 건 영어 그대로 둔다
-const DEPT_KO = {
-  'Internal Medicine':'내과', 'Medicine':'내과', 'Cardiology':'심장내과', 'Gastroenterology':'소화기내과',
-  'Pulmonary and Critical Care Medicine':'호흡기내과', 'Pulmonology and Critical Care Medicine':'호흡기내과',
-  'Oncology':'종양내과', 'Hematology':'혈액내과', 'Nephrology':'신장내과', 'Endocrinology and Metabolism':'내분비내과',
-  'Infectious Diseases':'감염내과', 'Infectious Disease':'감염내과', 'Rheumatology':'류마티스내과',
-  'Allergy and Clinical Immunology':'알레르기내과', 'Geriatrics':'노년내과',
-  'Surgery':'외과', 'General Surgery':'외과', 'Colon and Rectal Surgery':'대장항문외과', 'Breast Surgery':'유방외과',
-  'Gastrointestinal Surgery':'위장관외과', 'Acute Care Surgery':'외상외과', 'Vascular Surgery':'혈관외과',
-  'Hepatobiliary and Pancreatic Surgery':'간담도췌외과', 'Hepato-Biliary and Pancreatic Surgery':'간담도췌외과',
-  'Liver Transplantation and Hepatobiliary Surgery':'간이식·간담도외과',
-  'Hepatobiliary Surgery and Liver Transplantation':'간이식·간담도외과', 'Hepatobiliary and Liver Transplantation':'간이식·간담도외과',
-  'Kidney and Pancreas Transplantation':'신장·췌장이식외과', 'Pediatric Surgery':'소아외과',
-  'Thoracic and Cardiovascular Surgery':'흉부외과', 'Cardiothoracic Surgery':'흉부외과', 'Pediatric Cardiac Surgery':'소아심장외과',
-  'Neurosurgery':'신경외과', 'Neurological Surgery':'신경외과', 'Orthopedic Surgery':'정형외과', 'Orthopaedic Surgery':'정형외과',
-  'Plastic and Reconstructive Surgery':'성형외과', 'Plastic Surgery':'성형외과', 'Urology':'비뇨의학과',
-  'Obstetrics and Gynecology':'산부인과', 'Obstetrics & Gynecology':'산부인과',
-  'Pediatrics':'소아청소년과', 'Paediatrics':'소아청소년과', 'Neonatology':'신생아과', 'Pediatric Nephrology':'소아신장',
-  'Pediatric Emergency Care Medicine':'소아응급의학과', 'Neurology':'신경과', 'Psychiatry':'정신건강의학과',
-  'Ophthalmology':'안과', 'Otorhinolaryngology':'이비인후과', 'Otolaryngology':'이비인후과',
-  'Otorhinolaryngology-Head and Neck Surgery':'이비인후과', 'Otolaryngology-Head and Neck Surgery':'이비인후과',
-  'Otorhinolaryngology - Head and Neck Surgery':'이비인후과', 'Oral and Maxillofacial Surgery':'구강악안면외과',
-  'Dermatology':'피부과', 'Radiology':'영상의학과', 'Radiology and Research Institute of Radiology':'영상의학과',
-  'Radiation Oncology':'방사선종양학과', 'Nuclear Medicine':'핵의학과', 'Pathology':'병리과',
-  'Laboratory Medicine':'진단검사의학과', 'Anesthesiology and Pain Medicine':'마취통증의학과',
-  'Emergency Medicine':'응급의학과', 'Family Medicine':'가정의학과', 'Rehabilitation Medicine':'재활의학과',
-  'Physical Medicine and Rehabilitation':'재활의학과', 'Clinical Epidemiology and Biostatistics':'임상역학연구센터',
-  'Medical Informatics and Statistics':'의학통계학과', 'Medical Informatics & Statistics':'의학통계학과', 'Biostatistics':'의학통계학과',
-  'Convergence Medicine':'융합의학과', 'Biomedical Sciences':'의생명과학과', 'Biomedical Science':'의생명과학과',
-  'Medical Science':'의과학과', 'Biomedical Engineering':'의공학과', 'Biochemistry and Molecular Biology':'생화학분자생물학교실',
-  'Pharmacology':'약리학교실', 'Physiology':'생리학교실', 'Microbiology':'미생물학교실', 'Preventive Medicine':'예방의학교실',
-  'Clinical Pharmacology and Therapeutics':'임상약리학과', 'Pharmacy':'약제부', 'Nursing':'간호부',
-  'Digital Medicine':'디지털의학', 'Information Medicine':'정보의학과', 'Precision Medicine':'정밀의학',
-  'Cell and Genetic Engineering':'세포유전자공학', 'Cell Therapy':'세포치료센터', 'Nutrition Services':'영양팀',
-  'Health Screening and Promotion Center':'건강증진센터',
-};
+// 진료과는 소속 칸의 영어 이름이라 자주 나오는 것만 우리말로 바꾼다. 없는 건 영어 그대로 둔다.
+// 표는 dept_ko.py 하나에만 있고 research.json의 '진료과표'로 받는다(병원 홈페이지 명단 매칭에 파이썬도 써서 옮김)
+let DEPT_KO = {};
 function deptKo(d) {
+  if (!d) return '';
   if (DEPT_KO[d]) return DEPT_KO[d];
   const head = Object.keys(DEPT_KO).find(k => d.startsWith(k + ' and ') || d.startsWith(k + ','));
   return head ? DEPT_KO[head] : d;
@@ -285,6 +253,7 @@ async function init() {
   try {
     const res = await fetch('./research.json?t=' + Date.now());
     if (res.ok) data = await res.json();
+    DEPT_KO = data?.['진료과표'] || {};
   } catch (e) { console.log('research.json 로드 실패:', e); }
   if (data) {
     $('last-updated').textContent = `마지막 수집: ${data['생성'] || '—'}`;
@@ -547,20 +516,25 @@ function render() {
 // 논문의 대표 진료과 = 주도 저자 중 교신 → 마지막 → 제1 저자의 진료과(없으면 우리 저자 진료과 첫째).
 // 위의 연도·날짜·진료과·검색 필터가 그대로 걸린다.
 const ROLE_ORDER = ['교신', '마지막', '제1'];
+// 저자의 진료과 — 병원 홈페이지 명단에서 찾은 사람이면 홈페이지 진료과, 아니면 논문 소속 칸
+function authorDept(a) {
+  return data?.['한글이름병원']?.[a['이름']]?.['진료과'] || deptKo(a['진료과']);
+}
 function leadDept(p) {
   const L = p['주도저자'] || [];
   for (const r of ROLE_ORDER) {
-    const a = L.find(a => (a['역할'] || []).includes(r) && a['진료과']);
-    if (a) return deptKo(a['진료과']);
+    const a = L.find(a => (a['역할'] || []).includes(r) && authorDept(a));
+    if (a) return authorDept(a);
   }
   return deptKo((p['진료과'] || [])[0] || '') || '(미상)';
 }
-// 영문 → 한글 이름. 사람이 적은 것(names_manual.csv, 진료과가 맞을 때만)이 먼저, 그다음 보도자료 명단 자동 매칭
+// 영문 → 한글 이름. ① 사람이 적은 것(names_manual.csv, 진료과가 맞을 때만) ② 병원 홈페이지 의료진 명단
+// ③ 보도자료 의료진 명단. ②가 ③보다 앞인 이유 — ③은 진료과를 안 봐서 'Tae Yeon Kim'을 김대연으로 잘못 붙였다
 function koName(en, deptEn = '') {
   const k = (en || '').toLowerCase().replace(/[^a-z]/g, '');
   const m = (data?.['한글이름수동'] || []).find(m => m['영문'].toLowerCase().replace(/[^a-z]/g, '') === k);
   if (m && (!m['진료과'] || !deptEn || m['진료과'] === deptKo(deptEn))) return m['한글'];
-  return data?.['한글이름']?.[en] || '';
+  return data?.['한글이름병원']?.[en]?.['한글'] || data?.['한글이름']?.[en] || '';
 }
 function pct(a, b) { return b ? (a / b * 100).toFixed(1) + '%' : '—'; }
 
@@ -589,7 +563,7 @@ function analysisData(base) {
     r.n++; r.first += roles.includes('제1'); r.corr += roles.includes('교신'); r.last += roles.includes('마지막');
     r.sa += AN_PICK.sa(p); r.hi += AN_PICK.hi(p); r.pr += AN_PICK.pr(p);
     r.list.push(p); r.roles.set(p.pmid, roles);
-    if (a['진료과']) { const d = deptKo(a['진료과']); r.depts[d] = (r.depts[d] || 0) + 1; }
+    { const d = authorDept(a); if (d) r.depts[d] = (r.depts[d] || 0) + 1; }
     M.set(k, r);
   }
   // 사람이 직접 적은 한글 이름(names_manual.csv)이 자동 매칭보다 우선. 진료과를 적었으면 그 과일 때만

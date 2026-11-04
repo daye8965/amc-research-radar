@@ -1,0 +1,112 @@
+"""PubMed 소속 칸의 영어 진료과 이름 → 우리말. 화면(docs/index.html)은 research.json의 `진료과표`로 이것을 받아 쓴다.
+
+예전엔 화면 JS에만 있었는데, 병원 홈페이지 의료진 명단과 맞출 때 파이썬에서도 필요해 여기로 옮겼다(2026-11-04).
+사본을 두 군데 두지 않는다 — 진료과를 더할 때는 이 파일만 고친다.
+값은 **병원 홈페이지 진료과 이름에 맞춘다**(심장혈관흉부외과·신·췌장이식외과) — 홈페이지 명단으로 찾은 저자와 한 과로 묶이게.
+"""
+
+DEPT_KO = {
+    'Internal Medicine': '내과',
+    'Medicine': '내과',
+    'Cardiology': '심장내과',
+    'Gastroenterology': '소화기내과',
+    'Pulmonary and Critical Care Medicine': '호흡기내과',
+    'Pulmonology and Critical Care Medicine': '호흡기내과',
+    'Oncology': '종양내과',
+    'Hematology': '혈액내과',
+    'Nephrology': '신장내과',
+    'Endocrinology and Metabolism': '내분비내과',
+    'Infectious Diseases': '감염내과',
+    'Infectious Disease': '감염내과',
+    'Rheumatology': '류마티스내과',
+    'Allergy and Clinical Immunology': '알레르기내과',
+    'Geriatrics': '노년내과',
+    'Surgery': '외과',
+    'General Surgery': '외과',
+    'Colon and Rectal Surgery': '대장항문외과',
+    'Breast Surgery': '유방외과',
+    'Gastrointestinal Surgery': '위장관외과',
+    'Acute Care Surgery': '외상외과',
+    'Vascular Surgery': '혈관외과',
+    'Hepatobiliary and Pancreatic Surgery': '간담도췌외과',
+    'Hepato-Biliary and Pancreatic Surgery': '간담도췌외과',
+    'Liver Transplantation and Hepatobiliary Surgery': '간이식·간담도외과',
+    'Hepatobiliary Surgery and Liver Transplantation': '간이식·간담도외과',
+    'Hepatobiliary and Liver Transplantation': '간이식·간담도외과',
+    'Kidney and Pancreas Transplantation': '신·췌장이식외과',
+    'Pediatric Surgery': '소아외과',
+    'Thoracic and Cardiovascular Surgery': '심장혈관흉부외과',
+    'Cardiothoracic Surgery': '심장혈관흉부외과',
+    'Pediatric Cardiac Surgery': '소아심장외과',
+    'Neurosurgery': '신경외과',
+    'Neurological Surgery': '신경외과',
+    'Orthopedic Surgery': '정형외과',
+    'Orthopaedic Surgery': '정형외과',
+    'Plastic and Reconstructive Surgery': '성형외과',
+    'Plastic Surgery': '성형외과',
+    'Urology': '비뇨의학과',
+    'Obstetrics and Gynecology': '산부인과',
+    'Obstetrics & Gynecology': '산부인과',
+    'Pediatrics': '소아청소년과',
+    'Paediatrics': '소아청소년과',
+    'Neonatology': '신생아과',
+    'Pediatric Nephrology': '소아신장',
+    'Pediatric Emergency Care Medicine': '소아응급의학과',
+    'Neurology': '신경과',
+    'Psychiatry': '정신건강의학과',
+    'Ophthalmology': '안과',
+    'Otorhinolaryngology': '이비인후과',
+    'Otolaryngology': '이비인후과',
+    'Otorhinolaryngology-Head and Neck Surgery': '이비인후과',
+    'Otolaryngology-Head and Neck Surgery': '이비인후과',
+    'Otorhinolaryngology - Head and Neck Surgery': '이비인후과',
+    'Oral and Maxillofacial Surgery': '구강악안면외과',
+    'Dermatology': '피부과',
+    'Radiology': '영상의학과',
+    'Radiology and Research Institute of Radiology': '영상의학과',
+    'Radiation Oncology': '방사선종양학과',
+    'Nuclear Medicine': '핵의학과',
+    'Pathology': '병리과',
+    'Laboratory Medicine': '진단검사의학과',
+    'Anesthesiology and Pain Medicine': '마취통증의학과',
+    'Emergency Medicine': '응급의학과',
+    'Family Medicine': '가정의학과',
+    'Rehabilitation Medicine': '재활의학과',
+    'Physical Medicine and Rehabilitation': '재활의학과',
+    'Clinical Epidemiology and Biostatistics': '임상역학연구센터',
+    'Medical Informatics and Statistics': '의학통계학과',
+    'Medical Informatics & Statistics': '의학통계학과',
+    'Biostatistics': '의학통계학과',
+    'Convergence Medicine': '융합의학과',
+    'Biomedical Sciences': '의생명과학과',
+    'Biomedical Science': '의생명과학과',
+    'Medical Science': '의과학과',
+    'Biomedical Engineering': '의공학과',
+    'Biochemistry and Molecular Biology': '생화학분자생물학교실',
+    'Pharmacology': '약리학교실',
+    'Physiology': '생리학교실',
+    'Microbiology': '미생물학교실',
+    'Preventive Medicine': '예방의학교실',
+    'Clinical Pharmacology and Therapeutics': '임상약리학과',
+    'Pharmacy': '약제부',
+    'Nursing': '간호부',
+    'Digital Medicine': '디지털의학',
+    'Information Medicine': '정보의학과',
+    'Precision Medicine': '정밀의학',
+    'Cell and Genetic Engineering': '세포유전자공학',
+    'Cell Therapy': '세포치료센터',
+    'Nutrition Services': '영양팀',
+    'Health Screening and Promotion Center': '건강증진센터',
+}
+
+
+def dept_ko(d):
+    """영어 진료과 → 우리말. 표에 없으면 'X and Y'·'X, …'의 앞부분으로 한 번 더 찾고, 그래도 없으면 영어 그대로."""
+    if not d:
+        return ""
+    if d in DEPT_KO:
+        return DEPT_KO[d]
+    for k, v in DEPT_KO.items():
+        if d.startswith(k + " and ") or d.startswith(k + ","):
+            return v
+    return d

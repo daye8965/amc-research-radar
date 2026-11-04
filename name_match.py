@@ -16,7 +16,7 @@ JONG = ["", "k", "k", "k", "n", "n", "n", "t", "l", "k", "m", "l", "l", "l", "p"
 CHO_ALT = {"g": ["g", "k"], "d": ["d", "t"], "b": ["b", "p"], "j": ["j", "ch"], "s": ["s", "sh"],
            "r": ["r", "l"], "kk": ["kk", "gg", "k"], "tt": ["tt", "dd", "t"], "pp": ["pp", "bb", "p"],
            "ss": ["ss", "s"], "jj": ["jj", "j"], "ch": ["ch", "c"]}
-JUNG_ALT = {"eo": ["eo", "u", "o", "eu"], "yeo": ["yeo", "yu", "yo", "you"], "u": ["u", "oo", "woo", "wu"],
+JUNG_ALT = {"e": ["e", "ei"], "eo": ["eo", "u", "o", "eu"], "yeo": ["yeo", "yu", "yo", "you"], "u": ["u", "oo", "woo", "wu"],
             "eu": ["eu", "u"], "ui": ["ui", "eui", "ee", "i"], "i": ["i", "ee", "y"], "ae": ["ae", "e", "ai"],
             "ye": ["ye", "ae", "e", "hye"], "oe": ["oe", "oi", "wi", "we"], "yu": ["yu", "yoo", "you"],
             "o": ["o", "oh"], "wo": ["wo", "won"]}
@@ -25,7 +25,7 @@ JONG_ALT = {"k": ["k", "g"], "p": ["p", "b"], "t": ["t", "s", "d"], "l": ["l", "
 # 성은 관습 표기가 따로 있다 (이 → Lee, 박 → Park …)
 SURNAME = {
     "김": ["kim", "gim"], "이": ["lee", "yi", "rhee", "ri", "lie", "i"], "박": ["park", "pak", "bak"],
-    "최": ["choi", "choe", "chae"], "정": ["jung", "jeong", "chung", "joung", "cheong"], "강": ["kang", "gang"],
+    "최": ["choi", "choe", "chae"], "정": ["jung", "jeong", "chung", "joung", "cheong", "chong"], "강": ["kang", "gang"],
     "조": ["cho", "jo", "joh"], "윤": ["yoon", "yun"], "장": ["jang", "chang"], "임": ["lim", "im", "yim", "rim"],
     "한": ["han"], "오": ["oh", "o"], "서": ["seo", "suh", "so"], "신": ["shin", "sin"], "권": ["kwon", "gwon"],
     "황": ["hwang"], "안": ["ahn", "an"], "송": ["song"], "류": ["ryu", "yoo", "yu", "ryoo", "lyu"],

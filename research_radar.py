@@ -26,6 +26,8 @@ import requests
 
 from press_match import match_releases
 from value_judge import eligible as value_eligible, judge_value
+from staff_match import load_staff, match_staff
+from dept_ko import DEPT_KO
 
 KST = timezone(timedelta(hours=9))
 NOW = datetime.now(KST)
@@ -427,6 +429,15 @@ def main():
         names = old.get("한글이름", {})          # 보도자료 목록을 못 읽은 날은 지난 것을 쓴다
     value_cache = judge_value(list(papers.values()), value_cache, status)
 
+    # 병원 홈페이지 의료진 명단으로 한글 이름·진료과 (일주일에 한 번 새로 읽음, 실패하면 지난 명단)
+    try:
+        staff, staff_msg = load_staff(log)
+        staff_names, why = match_staff(list(papers.values()), staff)
+        status["의료진명단"] = f"{staff_msg} · {len(staff)}명 · 저자 {len(staff_names)}명 매칭 {why}"
+    except Exception as e:
+        staff_names = old.get("한글이름병원", {})
+        status["의료진명단"] = f"실패 ({type(e).__name__}) — 지난 매칭 유지"
+
     items = sorted(papers.values(), key=lambda p: (p.get("등록일", ""), p["점수"]), reverse=True)
     status["후보"] = sum(p["후보"] for p in items)
     OUT.write_text(json.dumps({
@@ -445,6 +456,8 @@ def main():
         "보도가치": value_cache,
         "한글이름": names,
         "한글이름수동": load_manual_names(),
+        "한글이름병원": staff_names,
+        "진료과표": DEPT_KO,
     }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     log(json.dumps(status, ensure_ascii=False))
 
