@@ -36,6 +36,8 @@ main{padding:20px 32px;max-width:1320px;margin:0 auto}
 .notice{background:#fffbea;border:1px solid #f0e2a8;border-radius:var(--radius);padding:10px 14px;font-size:12px;color:#5a4a00;margin-bottom:14px;line-height:1.7}
 .notice details{margin-top:4px}
 .notice summary{cursor:pointer;font-weight:600}
+.card-help{margin:4px 0 2px 18px;padding:0}
+.card-help li{margin:1px 0}
 .notice table{margin:6px 0;border-collapse:collapse;font-size:12px;background:#fff}
 .notice td,.notice th{border:1px solid #f0e2a8;padding:3px 8px;text-align:left}
 
@@ -136,8 +138,16 @@ td{padding:10px 8px;vertical-align:top}
 <main>
   <div class="notice">
     PubMed에서 소속에 <b>서울아산병원</b>(Asan Medical Center · 울산의대 서울)이 적힌 논문을 매일 모읍니다.
-    저널 등급은 OpenAlex의 <b>최근 2년 평균 피인용</b>(IF와 같은 정의의 무료 대용치 — IF보다 작게 나옵니다)과 최상위 저널 목록으로 매깁니다.
-    <b>보도자료 후보</b> = S·A 등급이면서 우리 의료진이 제1·교신·마지막 저자인 연구 논문. PMID를 누르면 복사됩니다.
+    저널 등급은 <b>JCR IF</b>를 먼저 쓰고, IF가 없는 저널은 OpenAlex의 <b>최근 2년 평균 피인용</b>(IF보다 작게 나옵니다)으로 매깁니다. PMID를 누르면 복사됩니다.
+    <ul class="card-help">
+      <li><b>⭐ 보도자료 후보</b> — S·A 등급 저널이면서 우리 의료진이 <b>제1·교신·마지막 저자</b>인 연구 논문</li>
+      <li><b>📣 보도자료 배포</b> — 우리가 실제로 보도자료를 낸 논문 (배포일이 지난 것만)</li>
+      <li><b>🤖 AI 보도가치 높음</b> — 우리가 주도한 연구 논문 중 AI가 일반 언론 소재로 좋다고 본 것 (저널 등급과 별개)</li>
+      <li><b>🌐 최상위 저널 참여</b> — S 등급 저널(NEJM·Lancet·JAMA·Nature 등)에 실렸지만 우리 의료진이 <b>중간 공동저자로만</b> 들어간 연구 논문.
+        대부분 다국가·다기관 임상시험에 우리 병원이 참여 기관으로 들어간 경우입니다.
+        PubMed는 교신저자를 따로 표시하지 않아 <b>소속 칸에 이메일을 적은 저자</b>를 교신으로 보고, <b>공동 1저자</b>는 구별하지 못합니다 —
+        중요한 논문은 원문에서 저자 역할을 확인하세요.</li>
+    </ul>
     <details>
       <summary>📣 보도자료 배포 표시는 어떻게 붙나요?</summary>
       우리가 배포한 보도자료 목록('언론 업무' 시트)에서 <b>의료진 이름</b>을 영문으로 바꿔 논문 저자와 맞추고,
