@@ -17,10 +17,12 @@
 }
 body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
 
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:20}
-header h1{font-size:16px;font-weight:600;letter-spacing:-.3px}
-header p{font-size:11px;color:var(--muted);margin-top:1px}
-#total-badge{font-family:var(--mono);font-size:11px;background:var(--accent-bg);color:var(--accent);padding:3px 10px;border-radius:20px;font-weight:500;white-space:nowrap}
+/* 상단 — 언론유닛 홍보 실적 대시보드와 같은 짙은 남색 */
+header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:22px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:20}
+header h1{font-size:22px;font-weight:700;letter-spacing:-.4px;color:#fff}
+header p{font-size:12px;color:#cbd5e1;margin-top:3px}
+header #last-updated{font-family:var(--mono);font-size:11px;color:#94a3b8;margin-top:2px}
+#total-badge{font-family:var(--mono);font-size:12px;font-weight:600;background:rgba(255,255,255,.06);color:#e2e8f0;border:1px solid rgba(255,255,255,.25);padding:6px 14px;border-radius:20px;white-space:nowrap}
 
 .filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 32px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .filter-bar input,.filter-bar select{font-family:var(--font);font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none}
@@ -113,8 +115,7 @@ td{padding:10px 8px;vertical-align:top}
 <header>
   <div>
     <h1>🔬 서울아산병원 연구성과 레이더</h1>
-    <p>PubMed 신규 논문에서 보도자료 후보 찾기 · 매일 자동 수집</p>
-    <p style="color:var(--muted)">제작 : 이다예</p>
+    <p>서울아산병원 홍보팀 · PubMed 신규 논문에서 보도자료 후보 찾기 · 매일 자동 수집 · 제작: 이다예</p>
     <p id="last-updated">불러오는 중…</p>
   </div>
   <span id="total-badge">—</span>
