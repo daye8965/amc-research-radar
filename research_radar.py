@@ -10,7 +10,7 @@
 - 보도자료 표시: 우리가 배포한 보도자료 목록(언론 대시보드 개발본의 press_releases.json)과
   논문을 자동으로 맞춘다(press_match.py). 배포일이 지난 보도자료만 쓴다.
 
-환경변수: RESEARCH_DAYS(기본 10) · RESEARCH_KEEP_DAYS(기본 365) · NCBI_API_KEY · OPENALEX_API_KEY (모두 선택)
+환경변수: RESEARCH_DAYS(기본 10) · RESEARCH_KEEP_DAYS(기본 0 = 지우지 않음) · NCBI_API_KEY · OPENALEX_API_KEY (모두 선택)
           ANTHROPIC_API_KEY(보도자료 판정) · PRESS_URL(보도자료 목록 주소, 기본은 개발 대시보드)
 """
 import json
@@ -25,13 +25,15 @@ from pathlib import Path
 import requests
 
 from press_match import match_releases
+from value_judge import eligible as value_eligible, judge_value
 
 KST = timezone(timedelta(hours=9))
 NOW = datetime.now(KST)
 OUT = Path("docs/research.json")
 
 DAYS      = int(os.environ.get("RESEARCH_DAYS", "10") or 10)
-KEEP_DAYS = int(os.environ.get("RESEARCH_KEEP_DAYS", "365") or 365)
+# 0이면 오래된 논문을 지우지 않는다 — 화면에서 연도별로 보려면 쌓여 있어야 한다(2026-11-04부터)
+KEEP_DAYS = int(os.environ.get("RESEARCH_KEEP_DAYS", "0") or 0)
 NCBI_KEY  = os.environ.get("NCBI_API_KEY", "").strip()
 OA_KEY    = os.environ.get("OPENALEX_API_KEY", "").strip()
 UA        = {"User-Agent": "amc-research-radar/1.0"}
@@ -347,6 +349,7 @@ def main():
     papers = {p["pmid"]: p for p in old.get("논문", [])}
     jcache = old.get("저널", {})
     pr_cache = old.get("보도자료판정", {})
+    value_cache = old.get("보도가치", {})
     status = {}
 
     end = NOW.date()
@@ -364,9 +367,10 @@ def main():
     for a in fresh:
         papers[a["pmid"]] = a
 
-    # 오래된 것 정리 (등록일 기준)
-    cut = (NOW - timedelta(days=KEEP_DAYS)).strftime("%Y-%m-%d")
-    papers = {k: v for k, v in papers.items() if (v.get("등록일") or "9999") >= cut}
+    # 오래된 것 정리 (등록일 기준) — KEEP_DAYS가 0이면 하지 않는다
+    if KEEP_DAYS > 0:
+        cut = (NOW - timedelta(days=KEEP_DAYS)).strftime("%Y-%m-%d")
+        papers = {k: v for k, v in papers.items() if (v.get("등록일") or "9999") >= cut}
 
     all_issn = sorted({s for p in papers.values() for s in p["issn"]})
     fetch_journal_stats(all_issn, jcache)
@@ -387,11 +391,12 @@ def main():
         p["후보"] = is_candidate(p)
         # 최상위 저널에 우리가 공동저자로만 들어간 논문 — 후보는 아니지만 따로 보여 준다
         p["참여"] = (not p["후보"]) and p["연구"] and p["등급"] == "S"
-        if not p["등급"]:
-            p.pop("결론", None)                    # 파일 크기 — 등급 밖 논문의 초록 결론은 안 쓴다
+        if not p["등급"] and not value_eligible(p):
+            p.pop("결론", None)                    # 파일 크기 — 등급 밖이고 보도가치도 안 보는 논문의 결론은 안 쓴다
 
     # 결론까지 정리한 뒤에 맞춘다 — 판정에 결론을 보여 준다
     pr_cache = match_releases(list(papers.values()), pr_cache, NOW.date(), status)
+    value_cache = judge_value(list(papers.values()), value_cache, status)
 
     items = sorted(papers.values(), key=lambda p: (p.get("등록일", ""), p["점수"]), reverse=True)
     status["후보"] = sum(p["후보"] for p in items)
@@ -408,6 +413,7 @@ def main():
         "논문": items,
         "저널": jcache,
         "보도자료판정": pr_cache,
+        "보도가치": value_cache,
     }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     log(json.dumps(status, ensure_ascii=False))
 

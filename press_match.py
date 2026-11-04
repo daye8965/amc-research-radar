@@ -121,7 +121,9 @@ def prompt_for(rel, cands):
 
 
 class Judge:
-    def __init__(self):
+    """Claude 호출 하나를 감싼다. 보도가치 판정(value_judge.py)도 같은 것을 system·schema만 바꿔 쓴다."""
+    def __init__(self, system=SYSTEM, schema=SCHEMA, max_calls=MAX_CALLS, max_tokens=1024):
+        self.system, self.schema, self.max_calls, self.max_tokens = system, schema, max_calls, max_tokens
         self.client = None
         self.fatal = None
         self.calls = self.tin = self.tout = self.errors = 0
@@ -131,7 +133,7 @@ class Judge:
             self.client = anthropic.Anthropic(max_retries=4)
 
     def ready(self):
-        return self.client is not None and not self.fatal and self.calls < MAX_CALLS
+        return self.client is not None and not self.fatal and self.calls < self.max_calls
 
     def ask(self, text):
         self.calls += 1
@@ -139,9 +141,9 @@ class Judge:
         try:
             resp = self.client.messages.create(
                 model=MODEL,
-                max_tokens=1024,
-                system=SYSTEM,
-                output_config={"effort": "low", "format": {"type": "json_schema", "schema": SCHEMA}},
+                max_tokens=self.max_tokens,
+                system=self.system,
+                output_config={"effort": "low", "format": {"type": "json_schema", "schema": self.schema}},
                 messages=[{"role": "user", "content": text}],
             )
         except a.APIError as e:

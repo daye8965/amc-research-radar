@@ -53,7 +53,7 @@ main{padding:20px 32px;max-width:1320px;margin:0 auto}
 
 /* 좁은 화면에서는 표를 가로로 밀어 본다 — 열이 잘려 사라지지 않게 */
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:980px}
+table{width:100%;border-collapse:collapse;min-width:1100px}
 thead th{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.5px;padding:9px 8px;text-align:left;background:var(--bg);border-bottom:1px solid var(--border);white-space:nowrap}
 tbody tr{border-bottom:1px solid var(--border)}
 tbody tr:last-child{border-bottom:none}
@@ -82,6 +82,13 @@ td{padding:10px 8px;vertical-align:top}
 .pr{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap}
 .pr.배포{background:#1a7a3c;color:#fff}
 .pr-title{font-size:12px;color:#1a7a3c;font-weight:600;margin-top:3px}
+.period{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:12px;color:var(--muted)}
+.period b{color:var(--text);font-family:var(--mono);font-weight:500}
+.ai{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap;cursor:help}
+.ai.높음{background:#6a3fb5;color:#fff}
+.ai.보통{background:#efe9f8;color:#6a3fb5}
+.ai.낮음{background:#f0f0ec;color:#999}
+.ai-line{font-size:11px;color:#6a3fb5;line-height:1.45;margin-top:3px}
 .empty{text-align:center;padding:50px 20px;color:var(--muted);font-size:13px}
 
 .pagination{display:flex;gap:4px;justify-content:center;margin-top:14px;flex-wrap:wrap}
@@ -140,6 +147,7 @@ td{padding:10px 8px;vertical-align:top}
       <div id="tier-body">불러오는 중…</div>
     </details>
   </div>
+  <div class="period" id="period"></div>
   <div class="views" id="views"></div>
   <div class="stats-row" id="stats"></div>
   <div class="table-wrap" id="table"></div>
@@ -153,9 +161,10 @@ td{padding:10px 8px;vertical-align:top}
 //   pr   = 이 논문을 다룬 보도자료 {배포일, 보도자료(제목)} — press_match.py가 배포일이 지난 것만 붙인다
 const PAGE_SIZE = 20;
 let data = null;
-let view = 'cand';     // cand 보도자료 후보 · join 최상위 저널 참여 · marked 보도자료 배포 · all 전체
+let view = 'cand';     // cand 보도자료 후보 · ai AI 보도가치 높음 · join 최상위 저널 참여 · marked 보도자료 배포 · all 전체
 let sortBy = 'date';   // date 최신 등록순 · score 점수순
 let page = 1;
+let year = '';         // '' 전체 · '2026' 등 — PubMed 등록일의 연도
 
 // 진료과는 소속 칸의 영어 이름이라 자주 나오는 것만 우리말로 바꾼다. 없는 건 영어 그대로 둔다
 const DEPT_KO = {
@@ -276,6 +285,7 @@ function filtered() {
   const terms = $('search-input').value.toLowerCase().split(/\s+/).filter(Boolean);
   const base = P.filter(p => {
     const d = p['등록일'] || '';
+    if (year && !d.startsWith(year)) return false;
     if (from && d < from) return false;
     if (to && d > to) return false;
     if (dept && !(p['진료과'] || []).some(x => deptKo(x) === dept)) return false;
@@ -294,6 +304,7 @@ function filtered() {
     cand:   base.filter(p => p['후보']),
     join:   base.filter(p => p['참여']),
     marked: base.filter(p => p.pr),
+    ai:     base.filter(p => p['AI가치']?.['가치'] === '높음'),
     all:    base.filter(p => !lead || isLead(p)),
   };
   const cmp = sortBy === 'score'
@@ -304,10 +315,12 @@ function filtered() {
 }
 
 function setView(v) { view = v; page = 1; render(); }
+function setYear(y) { year = y; page = 1; render(); }
 function setSort(v) { sortBy = v; page = 1; render(); }
 function resetFilters() {
   ['date-from', 'date-to', 'search-input', 'dept-filter'].forEach(id => $(id).value = '');
   $('lead-only').checked = false;
+  year = '';
   page = 1; render();
 }
 function copyPmid(el, pmid) {
@@ -328,6 +341,13 @@ function prWhy(p) {
   const v = data?.['보도자료판정']?.[`${p.pr['배포일']}|${p.pr['보도자료']}`];
   return v && v.pmid === p.pmid ? v['근거'] || '' : '';
 }
+// AI 보도가치 — value_judge.py가 붙인 판정. 이유는 마우스를 올리면 보인다
+function aiCell(p) {
+  const v = p['AI가치'];
+  if (!v) return '<span style="color:var(--muted);font-size:11px">—</span>';
+  return `<span class="ai ${esc(v['가치'])}" title="${esc(v['이유'])}">${esc(v['가치'])}</span>`
+    + (v['가치'] !== '낮음' && v['한줄'] ? `<div class="ai-line">${esc(v['한줄'])}</div>` : '');
+}
 // 수집일 기준 이틀 안에 PubMed에 올라온 논문
 function newSince() {
   const g = (data?.['생성'] || '').slice(0, 10);
@@ -342,7 +362,16 @@ function render() {
     return;
   }
   const {base, views} = filtered();
-  const VIEWS = [['cand', '⭐ 보도자료 후보'], ['join', '🌐 최상위 저널 참여'], ['marked', '📣 보도자료 배포'], ['all', '전체']];
+  // 수집 기간 — PubMed 등록일 최소~최대, 연도별로 골라 볼 수 있다
+  const all = (data['논문'] || []).map(p => p['등록일']).filter(Boolean).sort();
+  const years = {};
+  for (const d of all) years[d.slice(0, 4)] = (years[d.slice(0, 4)] || 0) + 1;
+  $('period').innerHTML = `수집 기간 <b>${all[0] || '—'} ~ ${all[all.length - 1] || '—'}</b> (PubMed 등록일 · 매일 갱신)
+    <span style="margin-left:6px">연도</span>
+    <button class="pill${year === '' ? ' on' : ''}" onclick="setYear('')">전체 <span class="n">${all.length.toLocaleString()}</span></button>`
+    + Object.keys(years).sort().reverse().map(y =>
+      `<button class="pill${year === y ? ' on' : ''}" onclick="setYear('${y}')">${y} <span class="n">${years[y].toLocaleString()}</span></button>`).join('');
+  const VIEWS = [['cand', '⭐ 보도자료 후보'], ['ai', '🤖 AI 보도가치 높음'], ['join', '🌐 최상위 저널 참여'], ['marked', '📣 보도자료 배포'], ['all', '전체']];
   $('views').innerHTML = VIEWS.map(([k, label]) =>
     `<button class="pill${view === k ? ' on' : ''}" onclick="setView('${k}')">${label} <span class="n">${views[k].length}</span></button>`
   ).join('') + `<span class="sort-box">정렬
@@ -354,16 +383,18 @@ function render() {
     statCard('논문', base.length, 'var(--accent)'),
     statCard('보도자료 후보', views.cand.length, 'var(--accent)'),
     statCard('새 후보 (최근 이틀)', views.cand.filter(p => (p['등록일'] || '') >= since).length, '#c0392b'),
+    statCard('AI 보도가치 높음', views.ai.length, '#6a3fb5'),
     statCard('최상위 저널 참여', views.join.length, 'var(--accent)'),
     statCard('보도자료 배포', views.marked.length, '#1a7a3c'),
-    statCard('후보 중 배포', views.cand.filter(p => p.pr).length, '#1a7a3c'),
   ].join('');
 
   const rows = views[view];
   $('result-count').textContent = `${rows.length.toLocaleString()}편`;
   if (!rows.length) {
     $('table').innerHTML = `<div class="empty">${view === 'marked'
-      ? '이 기간에 보도자료로 나간 논문이 없습니다.' : '해당 조건의 논문이 없습니다.'}</div>`;
+      ? '이 기간에 보도자료로 나간 논문이 없습니다.'
+      : view === 'ai' && !(data['논문'] || []).some(p => p['AI가치'])
+      ? '아직 AI 보도가치 판정이 없습니다. 다음 자동 수집 때 채워집니다.' : '해당 조건의 논문이 없습니다.'}</div>`;
     $('pag').innerHTML = '';
     return;
   }
@@ -377,6 +408,7 @@ function render() {
       <th>논문</th>
       <th style="width:170px">우리 저자</th>
       <th style="width:100px">진료과</th>
+      <th style="width:150px" title="Claude가 일반 언론 보도 소재로서의 힘을 판단 (우리가 주도한 연구 논문만)">AI 보도가치</th>
       <th style="width:72px">PMID</th>
       <th style="width:62px">보도자료</th>
     </tr></thead>
@@ -396,6 +428,7 @@ function render() {
           ${showConcl && p['결론'] ? `<div class="concl">${esc(p['결론'])}</div>` : ''}</td>
         <td class="authors">${roles}${roles ? '<br>' : ''}${names}${more}<span class="cnt">저자 ${p['저자수']}명 중 우리 ${p['우리저자수']}명</span></td>
         <td class="dept">${(p['진료과'] || []).slice(0, 2).map(d => esc(deptKo(d))).join('<br>') || '—'}</td>
+        <td>${aiCell(p)}</td>
         <td><span class="pmid" title="눌러서 PMID 복사" onclick="copyPmid(this,'${p.pmid}')">${p.pmid}</span></td>
         <td>${prBadge(p)}</td>
       </tr>`;
@@ -417,7 +450,7 @@ function renderPag(n) {
 function goPage(p) { page = p; render(); window.scrollTo({top: 0, behavior: 'smooth'}); }
 
 // ── 엑셀 — 언론 대시보드와 같은 서식(나눔고딕 9pt·가운데, 긴 글만 왼쪽) ──────────
-const XL_LEFT = new Set(['제목', '결론', '저널', '우리 저자', '보도자료', '링크']);
+const XL_LEFT = new Set(['제목', '결론', '저널', '우리 저자', 'AI 한줄', 'AI 이유', '보도자료', '링크']);
 function styleSheet(ws) {
   const range = XLSX.utils.decode_range(ws['!ref']);
   const heads = [];
@@ -437,18 +470,19 @@ function styleSheet(ws) {
 function downloadExcel() {
   if (!data) return;
   const {views} = filtered();
-  const NAME = {cand: '보도자료 후보', join: '최상위 저널 참여', marked: '보도자료 배포', all: '전체'};
+  const NAME = {cand: '보도자료 후보', ai: 'AI 보도가치 높음', join: '최상위 저널 참여', marked: '보도자료 배포', all: '전체'};
   const rows = [['등록일', '출판일', '등급', 'IF(JCR)', '2년 피인용(OpenAlex)', '저널', '제목', '우리 저자', '교신(추정)', '제1저자', '마지막저자',
-                 '진료과', '결론', '보도자료', '배포일', 'PMID', 'DOI', '링크']];
+                 '진료과', '결론', 'AI 보도가치', 'AI 한줄', 'AI 이유', '보도자료', '배포일', 'PMID', 'DOI', '링크']];
   views[view].forEach(p => rows.push([
     p['등록일'] || '', p['출판일'] || '', p['등급'] || '', p['IF'] ?? '', p['지표'] ?? '', p['저널'] || '', p['제목'] || '',
     (p['우리저자'] || []).join(', '), (p['교신'] || []).join(', '), p['제1저자'] ? 'Y' : '', p['마지막저자'] ? 'Y' : '',
     (p['진료과'] || []).map(deptKo).join(', '), p['결론'] || '',
+    p['AI가치']?.['가치'] || '', p['AI가치']?.['한줄'] || '', p['AI가치']?.['이유'] || '',
     p.pr?.['보도자료'] || '', p.pr?.['배포일'] || '', p.pmid, p.doi || '', `https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/`,
   ]));
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!cols'] = [{wch:11},{wch:11},{wch:5},{wch:8},{wch:10},{wch:28},{wch:70},{wch:30},{wch:18},{wch:7},{wch:7},
-                 {wch:18},{wch:60},{wch:8},{wch:11},{wch:10},{wch:26},{wch:40}];
+                 {wch:18},{wch:60},{wch:9},{wch:40},{wch:50},{wch:40},{wch:11},{wch:10},{wch:26},{wch:40}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, styleSheet(ws), NAME[view]);
   XLSX.writeFile(wb, `연구성과_${NAME[view].replace(/ /g, '')}_${$('date-from').value || '처음'}_${$('date-to').value || '오늘'}.xlsx`);

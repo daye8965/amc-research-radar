@@ -33,7 +33,7 @@ jobs:
       # 보도자료 목록은 언론 대시보드 개발본의 공개 press_releases.json을 읽는다(구글 키 불필요).
       # 어느 논문인지 고르는 데 Claude를 쓴다 — 키가 없으면 새 판정 없이 지난 판정만 쓴다
       - name: PubMed 수집 · 저널 지표 · 보도자료 맞추기
-        timeout-minutes: 20
+        timeout-minutes: 50
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           NCBI_API_KEY:      ${{ secrets.NCBI_API_KEY }}
