@@ -112,6 +112,18 @@ td{padding:10px 8px;vertical-align:top}
 .an-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
 .an-card .label{font-size:10px;color:var(--muted);letter-spacing:.5px;margin-bottom:3px}
 .an-card .value{font-size:20px;font-weight:600;font-family:var(--mono)}
+.an-click{cursor:pointer;display:inline-block;border-radius:3px}
+.an-click:hover{background:var(--accent-bg);outline:2px solid var(--accent-bg)}
+.an-click:hover span,.an-click:hover{color:var(--accent)}
+.bar{display:inline-flex}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px}
+.modal[hidden]{display:none}
+.modal-box{background:var(--surface);border-radius:10px;width:min(1100px,100%);max-height:calc(100vh - 80px);display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);font-size:15px}
+.modal-head button{border:none;background:none;font-size:18px;color:var(--muted);cursor:pointer;padding:2px 8px}
+.modal-head button:hover{color:var(--text)}
+.modal-body{overflow:auto;padding:0 6px 10px}
+.modal-body table{min-width:820px}
 .more-btn{font-family:var(--font);font-size:12px;margin-top:8px;padding:4px 12px;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--muted);cursor:pointer}
 .more-btn:hover{color:var(--accent);border-color:var(--accent)}
 .en{color:var(--muted);font-size:11px;margin-left:4px}
@@ -197,6 +209,12 @@ td{padding:10px 8px;vertical-align:top}
     <div class="pagination" id="pag"></div>
   </div>
   <div id="an-panel" hidden></div>
+  <div id="modal" class="modal" hidden onclick="if (event.target === this) closeModal()">
+    <div class="modal-box">
+      <div class="modal-head"><b id="modal-title"></b><button onclick="closeModal()" title="닫기 (Esc)">✕</button></div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
 </main>
 
 <script>
@@ -210,10 +228,9 @@ let view = 'cand';     // cand 보도자료 후보 · ai AI 보도가치 높음 
 // 열 제목을 눌러 정렬 — 처음 누르면 내림차순, 다시 누르면 오름차순
 let sortCol = 'date', sortAsc = false;
 let page = 1;
-let year = '';
+let year = '';         // '' 전체 · '2026' 등 — PubMed 등록일의 연도
 let tab = 'list';      // list 논문 목록 · an 분석
 let anDeptAll = false, anPeopleAll = false;
-let anPeopleSort = {col: 'n', asc: false};         // '' 전체 · '2026' 등 — PubMed 등록일의 연도
 
 // 진료과는 소속 칸의 영어 이름이라 자주 나오는 것만 우리말로 바꾼다. 없는 건 영어 그대로 둔다
 const DEPT_KO = {
@@ -539,63 +556,98 @@ function leadDept(p) {
   return deptKo((p['진료과'] || [])[0] || '') || '(미상)';
 }
 function koName(en) { return data?.['한글이름']?.[en] || ''; }
-function barCell(n, max, color) {
-  const w = max ? Math.round(n / max * 140) : 0;
-  return `<div class="bar"><i style="width:${w}px;background:${color}"></i><span>${n.toLocaleString()}</span></div>`;
-}
 function pct(a, b) { return b ? (a / b * 100).toFixed(1) + '%' : '—'; }
 
 function analysisData(base) {
   const lead = base.filter(p => p['연구'] && isLead(p));
-  const sa = p => p['등급'] === 'S' || p['등급'] === 'A';
-  const hi = p => p['AI가치']?.['가치'] === '높음';
-  // 진료과별
+  // 진료과별 — 숫자와 함께 그 논문 목록(list)을 들고 다닌다. 숫자·막대를 누르면 이 목록에서 골라 보여 준다
   const D = new Map();
   for (const p of lead) {
     const k = leadDept(p);
-    const r = D.get(k) || {dept: k, n: 0, sa: 0, hi: 0, pr: 0};
-    r.n++; r.sa += sa(p); r.hi += hi(p); r.pr += !!p.pr;
+    const r = D.get(k) || {dept: k, n: 0, sa: 0, hi: 0, pr: 0, list: []};
+    r.n++; r.sa += AN_PICK.sa(p); r.hi += AN_PICK.hi(p); r.pr += AN_PICK.pr(p);
+    r.list.push(p);
     D.set(k, r);
   }
-  const depts = [...D.values()].sort((a, b) => b.n - a.n || b.pr - a.pr);
+  const depts = [...D.values()].map(r => ({...r, rate: r.n ? r.pr / r.n : 0}));
   // 연구자별 — 이름으로 묶는다(동명이인은 합쳐질 수 있음)
   const M = new Map();
   for (const p of lead) for (const a of (p['주도저자'] || [])) {
     if (!a['이름']) continue;
     // 대소문자·붙임표·띄어쓰기만 다른 표기는 같은 사람으로 묶는다(BumSik Hong = Bumsik Hong, Nam-Kug = Namkug)
     const k = a['이름'].toLowerCase().replace(/[^a-z]/g, '');
-    const r = M.get(k) || {en: a['이름'], ko: koName(a['이름']), depts: {}, n: 0, first: 0, corr: 0, last: 0, sa: 0, hi: 0, pr: 0};
+    const r = M.get(k) || {key: k, en: a['이름'], ko: koName(a['이름']), depts: {}, n: 0, first: 0, corr: 0, last: 0,
+                           sa: 0, hi: 0, pr: 0, list: [], roles: new Map()};
     if (!r.ko) r.ko = koName(a['이름']);
     const roles = a['역할'] || [];
     r.n++; r.first += roles.includes('제1'); r.corr += roles.includes('교신'); r.last += roles.includes('마지막');
-    r.sa += sa(p); r.hi += hi(p); r.pr += !!p.pr;
+    r.sa += AN_PICK.sa(p); r.hi += AN_PICK.hi(p); r.pr += AN_PICK.pr(p);
+    r.list.push(p); r.roles.set(p.pmid, roles);
     if (a['진료과']) { const d = deptKo(a['진료과']); r.depts[d] = (r.depts[d] || 0) + 1; }
     M.set(k, r);
   }
   const people = [...M.values()].map(r => ({...r,
+    name: r.ko || r.en,
     dept: Object.entries(r.depts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—'}));
   return {lead, depts, people};
 }
 
-const PEOPLE_COLS = {n: '주도 논문', first: '제1저자', corr: '교신', last: '마지막', sa: 'S·A', hi: 'AI 높음', pr: '보도자료'};
-function setPeopleSort(col) {
-  if (anPeopleSort.col === col) anPeopleSort.asc = !anPeopleSort.asc;
-  else anPeopleSort = {col, asc: false};
+// 숫자를 눌렀을 때 고르는 기준 — 표의 각 열과 같은 이름
+const AN_PICK = {
+  n:  () => true,
+  sa: p => p['등급'] === 'S' || p['등급'] === 'A',
+  hi: p => p['AI가치']?.['가치'] === '높음',
+  pr: p => !!p.pr,
+};
+const AN_LABEL = {n: '주도 논문', sa: 'S·A 등급', hi: 'AI 보도가치 높음', pr: '보도자료 배포', first: '제1저자', corr: '교신', last: '마지막 저자'};
+
+// 표 정렬 — 진료과 표와 연구자 표가 따로 상태를 가진다
+let anDeptSort = {col: 'n', asc: false};
+let anPeopleSort = {col: 'n', asc: false};
+function anSort(rows, st) {
+  const dir = st.asc ? 1 : -1;
+  return rows.slice().sort((a, b) => {
+    const x = a[st.col], y = b[st.col];
+    const c = typeof x === 'string' ? x.localeCompare(y, 'ko') : x - y;
+    return c * dir || b.n - a.n || b.pr - a.pr;
+  });
+}
+function setAnSort(which, col) {
+  const st = which === 'd' ? anDeptSort : anPeopleSort;
+  if (st.col === col) st.asc = !st.asc;
+  else { st.col = col; st.asc = ['dept', 'name'].includes(col); }   // 이름·진료과는 가나다순부터
   render();
 }
+function anTh(which, col, label, cls = '') {
+  const st = which === 'd' ? anDeptSort : anPeopleSort;
+  const on = st.col === col;
+  return `<th class="sortable${cls ? ' ' + cls : ''}${on ? ' on' : ''}" onclick="setAnSort('${which}','${col}')">${label}`
+    + `<span class="arrow">${on ? (st.asc ? '▲' : '▼') : '↕'}</span></th>`;
+}
+
+// 누를 수 있는 숫자·막대. 0이면 누를 것이 없다
+let anView = {d: [], p: []};      // 지금 화면에 그린 순서 — 누른 줄을 찾는 데 쓴다
+function anClick(which, i, pick, inner, n) {
+  if (!n) return '<span style="color:var(--muted)">—</span>';
+  return `<span class="an-click" title="눌러서 논문 보기" onclick="anOpen('${which}',${i},'${pick}')">${inner}</span>`;
+}
+function barCell(n, max, color) {
+  const w = max ? Math.round(n / max * 140) : 0;
+  return `<span class="bar"><i style="width:${w}px;background:${color}"></i><span>${n.toLocaleString()}</span></span>`;
+}
+
 function renderAnalysis(base) {
   const {lead, depts, people} = analysisData(base);
   const total = (k) => depts.reduce((s, d) => s + d[k], 0);
   const prTotal = total('pr');
   const maxN = Math.max(1, ...depts.map(d => d.n));
   const maxPr = Math.max(1, ...depts.map(d => d.pr));
-  const deptRows = anDeptAll ? depts : depts.slice(0, 20);
+  const dSorted = anSort(depts, anDeptSort);
+  const deptRows = anDeptAll ? dSorted : dSorted.slice(0, 20);
   const prDepts = depts.filter(d => d.pr).sort((a, b) => b.pr - a.pr || b.n - a.n);
-
-  const ps = anPeopleSort;
-  const sorted = people.slice().sort((a, b) => (a[ps.col] - b[ps.col]) * (ps.asc ? 1 : -1) || b.n - a.n || b.pr - a.pr);
-  const peopleRows = anPeopleAll ? sorted : sorted.slice(0, 30);
-  const pth = (col) => `<th class="num sortable${ps.col === col ? ' on' : ''}" onclick="setPeopleSort('${col}')">${PEOPLE_COLS[col]}<span class="arrow">${ps.col === col ? (ps.asc ? '▲' : '▼') : '↕'}</span></th>`;
+  const pSorted = anSort(people, anPeopleSort);
+  const peopleRows = anPeopleAll ? pSorted : pSorted.slice(0, 30);
+  anView = {d: deptRows, p: peopleRows, pr: prDepts};
 
   $('an-panel').innerHTML = `
     <div class="an-grid">
@@ -609,15 +661,15 @@ function renderAnalysis(base) {
     <div class="an-sec">
       <h2>진료과별 논문과 보도자료</h2>
       <div class="desc">우리 의료진이 제1·교신·마지막 저자인 연구 논문을 <b>대표 진료과</b>(교신 → 마지막 → 제1 저자의 소속 순)로 묶었습니다.
-        논문이 많은데 배포가 없는 과는 아직 찾지 못한 소재가 있을 수 있습니다.</div>
+        논문이 많은데 배포가 없는 과는 아직 찾지 못한 소재가 있을 수 있습니다. <b>열 제목을 누르면 정렬, 숫자·막대를 누르면 논문 목록</b>이 뜹니다.</div>
       <div class="table-wrap"><table>
-        <thead><tr><th>진료과</th><th>주도 논문</th><th class="num">S·A</th><th class="num">AI 높음</th><th>보도자료 배포</th><th class="num">배포율</th></tr></thead>
-        <tbody>${deptRows.map(d => `<tr>
-          <td>${esc(d.dept)}</td>
-          <td>${barCell(d.n, maxN, 'var(--accent)')}</td>
-          <td class="num">${d.sa || '—'}</td>
-          <td class="num" style="color:#6a3fb5">${d.hi || '—'}</td>
-          <td>${d.pr ? barCell(d.pr, maxPr, '#1a7a3c') : '<span style="color:var(--muted)">—</span>'}</td>
+        <thead><tr>${anTh('d', 'dept', '진료과')}${anTh('d', 'n', '주도 논문')}${anTh('d', 'sa', 'S·A', 'num')}${anTh('d', 'hi', 'AI 높음', 'num')}${anTh('d', 'pr', '보도자료 배포')}${anTh('d', 'rate', '배포율', 'num')}</tr></thead>
+        <tbody>${deptRows.map((d, i) => `<tr>
+          <td>${anClick('d', i, 'n', esc(d.dept), d.n)}</td>
+          <td>${anClick('d', i, 'n', barCell(d.n, maxN, 'var(--accent)'), d.n)}</td>
+          <td class="num">${anClick('d', i, 'sa', d.sa, d.sa)}</td>
+          <td class="num" style="color:#6a3fb5">${anClick('d', i, 'hi', d.hi, d.hi)}</td>
+          <td>${anClick('d', i, 'pr', barCell(d.pr, maxPr, '#1a7a3c'), d.pr)}</td>
           <td class="num">${d.pr ? pct(d.pr, d.n) : '—'}</td></tr>`).join('')}</tbody>
       </table></div>
       ${depts.length > 20 ? `<button class="more-btn" onclick="anDeptAll=!anDeptAll;render()">${anDeptAll ? '20개만 보기' : `전체 ${depts.length}개 과 보기`}</button>` : ''}
@@ -625,10 +677,10 @@ function renderAnalysis(base) {
 
     <div class="an-sec">
       <h2>보도자료 배포의 진료과별 분포</h2>
-      <div class="desc">보도자료로 나간 논문 ${prTotal}편이 어느 과에서 나왔는지입니다(위 표의 '보도자료 배포'만 모은 것).</div>
-      ${prDepts.length ? `<table><tbody>${prDepts.map(d => `<tr>
-          <td style="width:180px">${esc(d.dept)}</td>
-          <td>${barCell(d.pr, maxPr, '#1a7a3c')}</td>
+      <div class="desc">보도자료로 나간 논문 ${prTotal}편이 어느 과에서 나왔는지입니다. 막대를 누르면 그 보도자료 논문이 뜹니다.</div>
+      ${prDepts.length ? `<table><tbody>${prDepts.map((d, i) => `<tr>
+          <td style="width:180px">${anClick('pr', i, 'pr', esc(d.dept), d.pr)}</td>
+          <td>${anClick('pr', i, 'pr', barCell(d.pr, maxPr, '#1a7a3c'), d.pr)}</td>
           <td class="num" style="width:120px;color:var(--muted)">${pct(d.pr, prTotal)} · 논문 ${d.n}편 중</td></tr>`).join('')}</tbody></table>`
         : '<div class="empty" style="padding:20px">이 기간에 보도자료로 나간 논문이 없습니다.</div>'}
     </div>
@@ -637,20 +689,56 @@ function renderAnalysis(base) {
       <h2>주도 연구자 (제1·교신·마지막 저자)</h2>
       <div class="desc">논문 한 편에서 여러 역할을 맡으면 역할마다 셉니다(예: 제1저자이자 교신). 이름은 PubMed 영문 이름이고,
         <b>보도자료 의료진 명단과 맞는 사람만</b> 한글 이름을 붙였습니다. 교신은 소속 칸에 이메일을 적은 저자로 추정한 값이고,
-        같은 영문 이름의 다른 사람은 합쳐질 수 있습니다. 열 제목을 누르면 정렬됩니다.</div>
+        같은 영문 이름의 다른 사람은 합쳐질 수 있습니다. 열 제목을 누르면 정렬, 이름·숫자를 누르면 논문 목록이 뜹니다.</div>
       <div class="table-wrap"><table>
-        <thead><tr><th>연구자</th><th>진료과</th>${Object.keys(PEOPLE_COLS).map(pth).join('')}</tr></thead>
-        <tbody>${peopleRows.map(r => `<tr>
-          <td>${r.ko ? `<b>${esc(r.ko)}</b><span class="en">${esc(r.en)}</span>` : esc(r.en)}</td>
+        <thead><tr>${anTh('p', 'name', '연구자')}${anTh('p', 'dept', '진료과')}${anTh('p', 'n', '주도 논문', 'num')}${anTh('p', 'first', '제1저자', 'num')}${anTh('p', 'corr', '교신', 'num')}${anTh('p', 'last', '마지막', 'num')}${anTh('p', 'sa', 'S·A', 'num')}${anTh('p', 'hi', 'AI 높음', 'num')}${anTh('p', 'pr', '보도자료', 'num')}</tr></thead>
+        <tbody>${peopleRows.map((r, i) => `<tr>
+          <td>${anClick('p', i, 'n', r.ko ? `<b>${esc(r.ko)}</b><span class="en">${esc(r.en)}</span>` : esc(r.en), r.n)}</td>
           <td>${esc(r.dept)}</td>
-          <td class="num"><b>${r.n}</b></td><td class="num">${r.first || '—'}</td><td class="num">${r.corr || '—'}</td>
-          <td class="num">${r.last || '—'}</td><td class="num">${r.sa || '—'}</td>
-          <td class="num" style="color:#6a3fb5">${r.hi || '—'}</td>
-          <td class="num" style="color:#1a7a3c">${r.pr || '—'}</td></tr>`).join('')}</tbody>
+          <td class="num"><b>${anClick('p', i, 'n', r.n, r.n)}</b></td>
+          <td class="num">${anClick('p', i, 'first', r.first, r.first)}</td>
+          <td class="num">${anClick('p', i, 'corr', r.corr, r.corr)}</td>
+          <td class="num">${anClick('p', i, 'last', r.last, r.last)}</td>
+          <td class="num">${anClick('p', i, 'sa', r.sa, r.sa)}</td>
+          <td class="num" style="color:#6a3fb5">${anClick('p', i, 'hi', r.hi, r.hi)}</td>
+          <td class="num" style="color:#1a7a3c">${anClick('p', i, 'pr', r.pr, r.pr)}</td></tr>`).join('')}</tbody>
       </table></div>
       ${people.length > 30 ? `<button class="more-btn" onclick="anPeopleAll=!anPeopleAll;render()">${anPeopleAll ? '30명만 보기' : `전체 ${people.length.toLocaleString()}명 보기`}</button>` : ''}
     </div>`;
 }
+
+// ── 세부 내역 창 ──
+function anOpen(which, i, pick) {
+  const row = anView[which]?.[i];
+  if (!row) return;
+  let list, who;
+  if (which === 'p') {
+    const role = {first: '제1', corr: '교신', last: '마지막'}[pick];
+    list = row.list.filter(p => role ? (row.roles.get(p.pmid) || []).includes(role) : AN_PICK[pick](p));
+    who = row.ko ? `${row.ko} (${row.en})` : row.en;
+  } else {
+    list = row.list.filter(AN_PICK[pick]);
+    who = row.dept;
+  }
+  list = list.slice().sort((a, b) => (b['등록일'] || '').localeCompare(a['등록일'] || ''));
+  $('modal-title').textContent = `${who} · ${AN_LABEL[pick]} ${list.length}편`;
+  $('modal-body').innerHTML = `<table>
+    <thead><tr><th style="width:84px">등록</th><th style="width:40px">등급</th><th style="width:140px">저널</th><th>논문</th>
+      <th style="width:150px">주도 저자</th><th style="width:70px">AI</th></tr></thead>
+    <tbody>${list.map(p => `<tr>
+      <td class="td-date">${ymd(p['등록일'])}</td>
+      <td>${p['등급'] ? `<span class="tier ${p['등급']}">${p['등급']}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td class="journal">${esc(p['약어'] || p['저널'])}<span class="m${p['IF'] != null ? ' if' : ''}">${metricLabel(p)}</span></td>
+      <td class="td-title"><a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/" target="_blank" rel="noopener">${esc(p['제목'])}</a>
+        ${p.pr ? `<div class="pr-title">📣 ${esc(p.pr['보도자료'])} <span class="td-date">${ymd(p.pr['배포일'])}</span></div>` : ''}
+        ${p['AI가치']?.['한줄'] && p['AI가치']['가치'] !== '낮음' ? `<div class="ai-line">${esc(p['AI가치']['한줄'])}</div>` : ''}</td>
+      <td class="authors">${(p['주도저자'] || []).map(a => `${esc(koName(a['이름']) || a['이름'])} <span class="role">${(a['역할'] || []).join('·')}</span>`).join('<br>')}</td>
+      <td>${aiCell(p).split('<div')[0]}</td></tr>`).join('')}</tbody></table>`;
+  $('modal').hidden = false;
+  $('modal-body').scrollTop = 0;
+}
+function closeModal() { $('modal').hidden = true; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 function renderPag(n) {
   const total = Math.ceil(n / PAGE_SIZE), el = $('pag');
