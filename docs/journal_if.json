@@ -1,0 +1,1505 @@
+{
+"출처": "Clarivate JCR (S2Journal, 울산대학교 아산의학도서관)",
+"연도": [
+2025
+],
+"건수": 187,
+"저널": {
+"0036-1445": {
+"저널": "SIAM REVIEW",
+"IF": 8.2,
+"상위": 0.1,
+"사분위": "Q1",
+"분야": "MATHEMATICS, APPLIED",
+"연도": 2025
+},
+"1474-1776": {
+"저널": "NATURE REVIEWS DRUGDISCOVERY",
+"IF": 91.2,
+"상위": 0.1,
+"사분위": "Q1",
+"분야": "PHARMACOLOGY &PHARMACY",
+"연도": 2025
+},
+"2520-1131": {
+"저널": "Nature Electronics",
+"IF": 42.3,
+"상위": 0.1,
+"사분위": "Q1",
+"분야": "ENGINEERING, ELECTRICAL & ELECTRONIC",
+"연도": 2025
+},
+"1545-8636": {
+"저널": "MMWR Surveillance Summaries",
+"IF": 96.9,
+"상위": 0.1,
+"사분위": "Q1",
+"분야": "PUBLIC, ENVIRONMENTAL & OCCUPATIONAL HEALTH",
+"연도": 2025
+},
+"0140-6736": {
+"저널": "LANCET",
+"IF": 109.0,
+"상위": 0.1,
+"사분위": "Q1",
+"분야": "MEDICINE, GENERAL &INTERNAL",
+"연도": 2025
+},
+"0962-4929": {
+"저널": "ACTA NUMERICA",
+"IF": 12.8,
+"상위": 0.1,
+"사분위": "Q1",
+"분야": "MATHEMATICS",
+"연도": 2025
+},
+"0007-9235": {
+"저널": "CA-A CANCER JOURNAL FORCLINICIANS",
+"IF": 685.2,
+"상위": 0.1,
+"사분위": "Q1",
+"분야": "ONCOLOGY",
+"연도": 2025
+},
+"2662-138X": {
+"저널": "Nature Reviews Earth &Environment",
+"IF": 74.1,
+"상위": 0.1,
+"사분위": "Q1",
+"분야": "ENVIRONMENTALSCIENCES",
+"연도": 2025
+},
+"2058-8437": {
+"저널": "Nature Reviews Materials",
+"IF": 83.3,
+"상위": 0.1,
+"사분위": "Q1",
+"분야": "MATERIALS SCIENCE,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"1471-003X": {
+"저널": "NATURE REVIEWSNEUROSCIENCE",
+"IF": 29.0,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "NEUROSCIENCES",
+"연도": 2025
+},
+"1474-4422": {
+"저널": "LANCET NEUROLOGY",
+"IF": 54.6,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "CLINICAL NEUROLOGY",
+"연도": 2025
+},
+"1525-2019": {
+"저널": "Journal of InteractiveAdvertising",
+"IF": 10.2,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "COMMUNICATION",
+"연도": 2025
+},
+"2168-6254": {
+"저널": "JAMA Surgery",
+"IF": 15.6,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "SURGERY",
+"연도": 2025
+},
+"0009-2665": {
+"저널": "CHEMICAL REVIEWS",
+"IF": 64.3,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "CHEMISTRY,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"1935-8237": {
+"저널": "Foundations and Trends inMachine Learning",
+"IF": 36.6,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "COMPUTER SCIENCE,ARTIFICIALINTELLIGENCE",
+"연도": 2025
+},
+"2666-920X": {
+"저널": "Computers and Education:Artiﬁcial Intelligence",
+"IF": 23.4,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "EDUCATION &EDUCATIONAL RESEARCH",
+"연도": 2025
+},
+"1553-877X": {
+"저널": "IEEE Communications Surveysand Tutorials",
+"IF": 50.6,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "COMPUTER SCIENCE,INFORMATION SYSTEMS",
+"연도": 2025
+},
+"1674-2052": {
+"저널": "Molecular Plant",
+"IF": 32.7,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "PLANT SCIENCES",
+"연도": 2025
+},
+"1759-5002": {
+"저널": "Nature Reviews Cardiology",
+"IF": 50.2,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "CARDIAC & CARDIOVASCULAR SYSTEMS",
+"연도": 2025
+},
+"1471-0072": {
+"저널": "NATURE REVIEWS MOLECULARCELL BIOLOGY",
+"IF": 118.0,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "CELL BIOLOGY",
+"연도": 2025
+},
+"2638-6100": {
+"저널": "Radiology-Artiﬁcial Intelligence",
+"IF": 20.1,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "RADIOLOGY, NUCLEAR MEDICINE & MEDICAL IMAGING",
+"연도": 2025
+},
+"2095-9907": {
+"저널": "Signal Transduction andTargeted Therapy",
+"IF": 81.2,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "BIOCHEMISTRY &MOLECULAR BIOLOGY",
+"연도": 2025
+},
+"0169-5347": {
+"저널": "TRENDS IN ECOLOGY &EVOLUTION",
+"IF": 17.9,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "ECOLOGY",
+"연도": 2025
+},
+"1723-8617": {
+"저널": "World Psychiatry",
+"IF": 79.5,
+"상위": 0.2,
+"사분위": "Q1",
+"분야": "PSYCHIATRY",
+"연도": 2025
+},
+"0360-0300": {
+"저널": "ACM COMPUTING SURVEYS",
+"IF": 30.4,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "COMPUTER SCIENCE,THEORY & METHODS",
+"연도": 2025
+},
+"0906-6713": {
+"저널": "PERIODONTOLOGY 2000",
+"IF": 17.8,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "DENTISTRY, ORALSURGERY & MEDICINE",
+"연도": 2025
+},
+"1474-1733": {
+"저널": "NATURE REVIEWSIMMUNOLOGY",
+"IF": 62.2,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "IMMUNOLOGY",
+"연도": 2025
+},
+"1078-8956": {
+"저널": "NATURE MEDICINE",
+"IF": 52.3,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "MEDICINE, RESEARCH &EXPERIMENTAL",
+"연도": 2025
+},
+"2522-5839": {
+"저널": "Nature Machine Intelligence",
+"IF": 29.8,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "COMPUTER SCIENCE, INTERDISCIPLINARY APPLICATIONS",
+"연도": 2025
+},
+"2520-1158": {
+"저널": "Nature Catalysis",
+"IF": 48.3,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "CHEMISTRY, PHYSICAL",
+"연도": 2025
+},
+"1057-5987": {
+"저널": "MMWR Recommendations andReports",
+"IF": 51.3,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "PUBLIC,ENVIRONMENTAL &OCCUPATIONAL HEALTH",
+"연도": 2025
+},
+"1836-9553": {
+"저널": "Journal of Physiotherapy",
+"IF": 9.4,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "REHABILITATION",
+"연도": 2025
+},
+"2214-031X": {
+"저널": "Journal of OrthopaedicTranslation",
+"IF": 9.8,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "ORTHOPEDICS",
+"연도": 2025
+},
+"2168-6203": {
+"저널": "JAMA Pediatrics",
+"IF": 17.2,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "PEDIATRICS",
+"연도": 2025
+},
+"1355-4786": {
+"저널": "HUMAN REPRODUCTIONUPDATE",
+"IF": 20.1,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "OBSTETRICS &GYNECOLOGY",
+"연도": 2025
+},
+"1359-8368": {
+"저널": "COMPOSITES PART B-ENGINEERING",
+"IF": 14.0,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "ENGINEERING,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"1548-7660": {
+"저널": "Journal of Statistical Software",
+"IF": 14.3,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "STATISTICS &PROBABILITY",
+"연도": 2025
+},
+"0066-4189": {
+"저널": "Annual Review of FluidMechanics",
+"IF": 26.1,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "MECHANICS",
+"연도": 2025
+},
+"2165-8102": {
+"저널": "Annual Review of AnimalBiosciences",
+"IF": 12.3,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "VETERINARY SCIENCES",
+"연도": 2025
+},
+"0001-5962": {
+"저널": "ACTA MATHEMATICA",
+"IF": 7.3,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "MATHEMATICS",
+"연도": 2025
+},
+"0020-7489": {
+"저널": "INTERNATIONAL JOURNAL OFNURSING STUDIES",
+"IF": 8.7,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "NURSING",
+"연도": 2025
+},
+"2097-0498": {
+"저널": "Journal of Road Engineering",
+"IF": 12.8,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "ENGINEERING, CIVIL",
+"연도": 2025
+},
+"2058-7546": {
+"저널": "Nature Energy",
+"IF": 70.1,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "MATERIALS SCIENCE,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"2662-1355": {
+"저널": "Nature Food",
+"IF": 24.7,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "FOOD SCIENCE &TECHNOLOGY",
+"연도": 2025
+},
+"1759-5029": {
+"저널": "Nature Reviews Endocrinology",
+"IF": 39.1,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "ENDOCRINOLOGY &METABOLISM",
+"연도": 2025
+},
+"1759-5045": {
+"저널": "Nature ReviewsGastroenterology & Hepatology",
+"IF": 57.5,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "GASTROENTEROLOGY &HEPATOLOGY",
+"연도": 2025
+},
+"1471-0056": {
+"저널": "NATURE REVIEWS GENETICS",
+"IF": 51.4,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "GENETICS & HEREDITY",
+"연도": 2025
+},
+"1740-1526": {
+"저널": "NATURE REVIEWSMICROBIOLOGY",
+"IF": 104.6,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "MICROBIOLOGY",
+"연도": 2025
+},
+"2522-5820": {
+"저널": "Nature Reviews Physics",
+"IF": 46.6,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "PHYSICS, APPLIED",
+"연도": 2025
+},
+"2398-6352": {
+"저널": "npj Digital Medicine",
+"IF": 18.0,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "HEALTH CARE SCIENCES& SERVICES",
+"연도": 2025
+},
+"0360-1285": {
+"저널": "PROGRESS IN ENERGY ANDCOMBUSTION SCIENCE",
+"IF": 41.3,
+"상위": 0.3,
+"사분위": "Q1",
+"분야": "ENGINEERING,MECHANICAL",
+"연도": 2025
+},
+"0165-6147": {
+"저널": "TRENDS INPHARMACOLOGICAL SCIENCES",
+"IF": 24.0,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "PHARMACOLOGY &PHARMACY",
+"연도": 2025
+},
+"0028-4793": {
+"저널": "NEW ENGLAND JOURNAL OFMEDICINE",
+"IF": 85.0,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "MEDICINE, GENERAL &INTERNAL",
+"연도": 2025
+},
+"1759-5061": {
+"저널": "Nature Reviews Nephrology",
+"IF": 46.7,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "UROLOGY &NEPHROLOGY",
+"연도": 2025
+},
+"2948-1201": {
+"저널": "Nature Reviews ElectricalEngineering",
+"IF": 34.8,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "ENGINEERING,ELECTRICAL &ELECTRONIC",
+"연도": 2025
+},
+"2731-6092": {
+"저널": "Nature Reviews Bioengineering",
+"IF": 42.7,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "ENGINEERING,BIOMEDICAL",
+"연도": 2025
+},
+"0028-0836": {
+"저널": "NATURE",
+"IF": 56.1,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "MULTIDISCIPLINARYSCIENCES",
+"연도": 2025
+},
+"1867-2949": {
+"저널": "Mathematical ProgrammingComputation",
+"IF": 4.9,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "MATHEMATICS, APPLIED",
+"연도": 2025
+},
+"1473-3099": {
+"저널": "LANCET INFECTIOUS DISEASES",
+"IF": 29.4,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "INFECTIOUS DISEASES",
+"연도": 2025
+},
+"0253-4827": {
+"저널": "APPLIED MATHEMATICS ANDMECHANICS-ENGLISH EDITION",
+"IF": 4.9,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "MATHEMATICS, APPLIED",
+"연도": 2025
+},
+"1941-1405": {
+"저널": "Annual Review of MarineScience",
+"IF": 22.5,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "MARINE & FRESHWATERBIOLOGY",
+"연도": 2025
+},
+"1134-3060": {
+"저널": "ARCHIVES OF COMPUTATIONALMETHODS IN ENGINEERING",
+"IF": 12.9,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "MATHEMATICS,INTERDISCIPLINARYAPPLICATIONS",
+"연도": 2025
+},
+"0306-3674": {
+"저널": "BRITISH JOURNAL OF SPORTSMEDICINE",
+"IF": 16.7,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "SPORT SCIENCES",
+"연도": 2025
+},
+"1574-0137": {
+"저널": "Computer Science Review",
+"IF": 17.5,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "COMPUTER SCIENCE,SOFTWARE ENGINEERING",
+"연도": 2025
+},
+"2773-126X": {
+"저널": "Crop and Environment",
+"IF": 8.6,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "AGRONOMY",
+"연도": 2025
+},
+"1749-4885": {
+"저널": "Nature Photonics",
+"IF": 38.1,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "OPTICS",
+"연도": 2025
+},
+"1759-4774": {
+"저널": "Nature Reviews ClinicalOncology",
+"IF": 94.6,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "ONCOLOGY",
+"연도": 2025
+},
+"2398-9629": {
+"저널": "Nature Sustainability",
+"IF": 32.1,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "ENVIRONMENTALSCIENCES",
+"연도": 2025
+},
+"2731-6084": {
+"저널": "Nature Water",
+"IF": 30.7,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "WATER RESOURCES",
+"연도": 2025
+},
+"0163-7827": {
+"저널": "PROGRESS IN LIPID RESEARCH",
+"IF": 18.1,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "NUTRITION & DIETETICS",
+"연도": 2025
+},
+"2058-8615": {
+"저널": "Research Integrity and PeerReview",
+"IF": 9.6,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "HISTORY & PHILOSOPHYOF SCIENCE",
+"연도": 2025
+},
+"0034-6861": {
+"저널": "REVIEWS OF MODERN PHYSICS",
+"IF": 48.9,
+"상위": 0.4,
+"사분위": "Q1",
+"분야": "PHYSICS,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"2694-250X": {
+"저널": "ACS Measurement Science Au",
+"IF": 14.7,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "CHEMISTRY, ANALYTICAL",
+"연도": 2025
+},
+"1350-9462": {
+"저널": "PROGRESS IN RETINAL ANDEYE RESEARCH",
+"IF": 16.2,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "OPHTHALMOLOGY",
+"연도": 2025
+},
+"0079-6700": {
+"저널": "PROGRESS IN POLYMERSCIENCE",
+"IF": 32.8,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "POLYMER SCIENCE",
+"연도": 2025
+},
+"1571-0645": {
+"저널": "Physics of Life Reviews",
+"IF": 11.8,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "BIOLOGY",
+"연도": 2025
+},
+"1759-4758": {
+"저널": "Nature Reviews Neurology",
+"IF": 36.9,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "CLINICAL NEUROLOGY",
+"연도": 2025
+},
+"2662-8465": {
+"저널": "Nature Aging",
+"IF": 25.0,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "NEUROSCIENCES",
+"연도": 2025
+},
+"1756-8722": {
+"저널": "Journal of Hematology &Oncology",
+"IF": 47.8,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "HEMATOLOGY",
+"연도": 2025
+},
+"2097-2431": {
+"저널": "eScience",
+"IF": 52.9,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "MATERIALS SCIENCE,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"0009-7322": {
+"저널": "CIRCULATION",
+"IF": 41.4,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "PERIPHERAL VASCULARDISEASE",
+"연도": 2025
+},
+"0958-9465": {
+"저널": "CEMENT & CONCRETECOMPOSITES",
+"IF": 14.4,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "CONSTRUCTION &BUILDING TECHNOLOGY",
+"연도": 2025
+},
+"1664-3607": {
+"저널": "Bulletin of MathematicalSciences",
+"IF": 6.5,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "MATHEMATICS",
+"연도": 2025
+},
+"2097-2113": {
+"저널": "Artiﬁcial Intelligence inAgriculture",
+"IF": 16.1,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "AGRICULTURE,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"0362-1642": {
+"저널": "Annual Review ofPharmacology and Toxicology",
+"IF": 19.0,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "TOXICOLOGY",
+"연도": 2025
+},
+"0066-4170": {
+"저널": "Annual Review of Entomology",
+"IF": 16.9,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "ENTOMOLOGY",
+"연도": 2025
+},
+"0013-726X": {
+"저널": "ENDOSCOPY",
+"IF": 11.8,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "SURGERY",
+"연도": 2025
+},
+"0066-4308": {
+"저널": "Annual Review of Psychology",
+"IF": 41.8,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "PSYCHOLOGY",
+"연도": 2025
+},
+"1543-5008": {
+"저널": "Annual Review of Plant Biology",
+"IF": 26.4,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "PLANT SCIENCES",
+"연도": 2025
+},
+"2198-6436": {
+"저널": "Current Forestry Reports",
+"IF": 11.6,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "FORESTRY",
+"연도": 2025
+},
+"0190-9622": {
+"저널": "JOURNAL OF THE AMERICANACADEMY OF DERMATOLOGY",
+"IF": 12.3,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "DERMATOLOGY",
+"연도": 2025
+},
+"1833-2595": {
+"저널": "International Journal forEducational Integrity",
+"IF": 13.8,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "EDUCATION &EDUCATIONAL RESEARCH",
+"연도": 2025
+},
+"0278-6125": {
+"저널": "JOURNAL OF MANUFACTURINGSYSTEMS",
+"IF": 14.9,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "OPERATIONS RESEARCH& MANAGEMENTSCIENCE",
+"연도": 2025
+},
+"1005-0302": {
+"저널": "Journal of Materials Science &Technology",
+"IF": 16.8,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "METALLURGY &METALLURGICALENGINEERING",
+"연도": 2025
+},
+"2215-0366": {
+"저널": "Lancet Psychiatry",
+"IF": 21.1,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "PSYCHIATRY",
+"연도": 2025
+},
+"2213-2600": {
+"저널": "Lancet Respiratory Medicine",
+"IF": 34.2,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "RESPIRATORY SYSTEM",
+"연도": 2025
+},
+"8755-1209": {
+"저널": "REVIEWS OF GEOPHYSICS",
+"IF": 38.5,
+"상위": 0.5,
+"사분위": "Q1",
+"분야": "GEOCHEMISTRY &GEOPHYSICS",
+"연도": 2025
+},
+"2397-3358": {
+"저널": "Nature Reviews Chemistry",
+"IF": 50.3,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "CHEMISTRY,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"1548-7091": {
+"저널": "NATURE METHODS",
+"IF": 28.2,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "BIOCHEMICALRESEARCH METHODS",
+"연도": 2025
+},
+"2731-9997": {
+"저널": "Nature Cities",
+"IF": 15.3,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "URBAN STUDIES",
+"연도": 2025
+},
+"2055-7434": {
+"저널": "Microsystems &Nanoengineering",
+"IF": 11.1,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "INSTRUMENTS &INSTRUMENTATION",
+"연도": 2025
+},
+"2468-2667": {
+"저널": "Lancet Public Health",
+"IF": 26.5,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "PUBLIC, ENVIRONMENTAL & OCCUPATIONAL HEALTH",
+"연도": 2025
+},
+"2097-2512": {
+"저널": "Green Energy and IntelligentTransportation",
+"IF": 21.5,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "TRANSPORTATIONSCIENCE &TECHNOLOGY",
+"연도": 2025
+},
+"0195-668X": {
+"저널": "EUROPEAN HEART JOURNAL",
+"IF": 43.5,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "CARDIAC & CARDIOVASCULAR SYSTEMS",
+"연도": 2025
+},
+"0253-9837": {
+"저널": "Chinese Journal of Catalysis",
+"IF": 17.2,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "CHEMISTRY, APPLIED",
+"연도": 2025
+},
+"1936-122X": {
+"저널": "Annual Review of Biophysics",
+"IF": 12.9,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "BIOPHYSICS",
+"연도": 2025
+},
+"0066-4146": {
+"저널": "Annual Review of Astronomyand Astrophysics",
+"IF": 37.3,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "ASTRONOMY &ASTROPHYSICS",
+"연도": 2025
+},
+"1553-4006": {
+"저널": "Annual Review of Pathology-Mechanisms of Disease",
+"IF": 34.5,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "PATHOLOGY",
+"연도": 2025
+},
+"2044-1398": {
+"저널": "China Finance ReviewInternational",
+"IF": 10.8,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "BUSINESS, FINANCE",
+"연도": 2025
+},
+"1610-3653": {
+"저널": "Environmental ChemistryLetters",
+"IF": 25.2,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "ENGINEERING,ENVIRONMENTAL",
+"연도": 2025
+},
+"1354-1013": {
+"저널": "GLOBAL CHANGE BIOLOGY",
+"IF": 12.5,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "BIODIVERSITYCONSERVATION",
+"연도": 2025
+},
+"2329-9266": {
+"저널": "IEEE-CAA Journal of AutomaticaSinica",
+"IF": 18.3,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "AUTOMATION &CONTROL SYSTEMS",
+"연도": 2025
+},
+"2369-3762": {
+"저널": "JMIR Medical Education",
+"IF": 13.9,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "EDUCATION, SCIENTIFICDISCIPLINES",
+"연도": 2025
+},
+"2405-8351": {
+"저널": "Journal of Global Slavery",
+"IF": 1.6,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "HISTORY",
+"연도": 2025
+},
+"1752-0894": {
+"저널": "Nature Geoscience",
+"IF": 20.6,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "GEOSCIENCES,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"1476-1122": {
+"저널": "NATURE MATERIALS",
+"IF": 38.0,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "PHYSICS, CONDENSEDMATTER",
+"연도": 2025
+},
+"0031-9333": {
+"저널": "Physiological Reviews",
+"IF": 35.7,
+"상위": 0.6,
+"사분위": "Q1",
+"분야": "PHYSIOLOGY",
+"연도": 2025
+},
+"0079-6425": {
+"저널": "PROGRESS IN MATERIALSSCIENCE",
+"IF": 42.9,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "MATERIALS SCIENCE,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"0018-9219": {
+"저널": "PROCEEDINGS OF THE IEEE",
+"IF": 30.9,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "ENGINEERING, ELECTRICAL & ELECTRONIC",
+"연도": 2025
+},
+"2056-676X": {
+"저널": "Nature Reviews Disease Primers",
+"IF": 79.8,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "MEDICINE, GENERAL &INTERNAL",
+"연도": 2025
+},
+"2397-334X": {
+"저널": "Nature Ecology & Evolution",
+"IF": 17.1,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "ECOLOGY",
+"연도": 2025
+},
+"1936-878X": {
+"저널": "JACC-Cardiovascular Imaging",
+"IF": 19.0,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "RADIOLOGY, NUCLEAR MEDICINE & MEDICAL IMAGING",
+"연도": 2025
+},
+"0924-2716": {
+"저널": "ISPRS JOURNAL OF PHOTOGRAMMETRY AND REMOTE SENSING",
+"IF": 12.9,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "GEOGRAPHY, PHYSICAL",
+"연도": 2025
+},
+"2042-6976": {
+"저널": "International Forum of Allergy &Rhinology",
+"IF": 7.1,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "OTORHINOLARYNGOLOGY",
+"연도": 2025
+},
+"1368-7646": {
+"저널": "DRUG RESISTANCE UPDATES",
+"IF": 22.0,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "PHARMACOLOGY &PHARMACY",
+"연도": 2025
+},
+"0007-0912": {
+"저널": "BRITISH JOURNAL OFANAESTHESIA",
+"IF": 10.3,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "ANESTHESIOLOGY",
+"연도": 2025
+},
+"2949-9291": {
+"저널": "Biogeotechnics",
+"IF": 15.9,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "ENGINEERING,GEOLOGICAL",
+"연도": 2025
+},
+"0923-7534": {
+"저널": "ANNALS OF ONCOLOGY",
+"IF": 80.4,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "ONCOLOGY",
+"연도": 2025
+},
+"0003-486X": {
+"저널": "ANNALS OF MATHEMATICS",
+"IF": 5.1,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "MATHEMATICS",
+"연도": 2025
+},
+"2473-2397": {
+"저널": "IEEE Geoscience and RemoteSensing Magazine",
+"IF": 17.1,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "REMOTE SENSING",
+"연도": 2025
+},
+"2631-8644": {
+"저널": "International Journal ofExtreme Manufacturing",
+"IF": 25.1,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "ENGINEERING,MANUFACTURING",
+"연도": 2025
+},
+"0198-6325": {
+"저널": "MEDICINAL RESEARCH REVIEWS",
+"IF": 13.6,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "CHEMISTRY, MEDICINAL",
+"연도": 2025
+},
+"1759-0876": {
+"저널": "Wiley Interdisciplinary Reviews- Computational Molecular Science",
+"IF": 10.9,
+"상위": 0.7,
+"사분위": "Q1",
+"분야": "MATHEMATICAL & COMPUTATIONAL BIOLOGY",
+"연도": 2025
+},
+"1754-5692": {
+"저널": "Energy & EnvironmentalScience",
+"IF": 30.5,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "ENGINEERING,CHEMICAL",
+"연도": 2025
+},
+"1550-4131": {
+"저널": "Cell Metabolism",
+"IF": 37.0,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "ENDOCRINOLOGY &METABOLISM",
+"연도": 2025
+},
+"0924-2244": {
+"저널": "TRENDS IN FOOD SCIENCE &TECHNOLOGY",
+"IF": 17.4,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "FOOD SCIENCE &TECHNOLOGY",
+"연도": 2025
+},
+"1364-6613": {
+"저널": "TRENDS IN COGNITIVESCIENCES",
+"IF": 20.3,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "NEUROSCIENCES",
+"연도": 2025
+},
+"1753-5123": {
+"저널": "Reviews in Aquaculture",
+"IF": 13.8,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "FISHERIES",
+"연도": 2025
+},
+"0376-0421": {
+"저널": "PROGRESS IN AEROSPACESCIENCES",
+"IF": 24.2,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "ENGINEERING,AEROSPACE",
+"연도": 2025
+},
+"1061-4036": {
+"저널": "NATURE GENETICS",
+"IF": 25.5,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "GENETICS & HEREDITY",
+"연도": 2025
+},
+"1087-0156": {
+"저널": "NATURE BIOTECHNOLOGY",
+"IF": 44.5,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "BIOTECHNOLOGY &APPLIED MICROBIOLOGY",
+"연도": 2025
+},
+"2311-6706": {
+"저널": "Nano-Micro Letters",
+"IF": 38.5,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "PHYSICS, APPLIED",
+"연도": 2025
+},
+"2352-4642": {
+"저널": "Lancet Child & AdolescentHealth",
+"IF": 13.6,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "PEDIATRICS",
+"연도": 2025
+},
+"2168-6149": {
+"저널": "JAMA Neurology",
+"IF": 23.6,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "CLINICAL NEUROLOGY",
+"연도": 2025
+},
+"1536-1284": {
+"저널": "IEEE WIRELESSCOMMUNICATIONS",
+"IF": 13.7,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "COMPUTER SCIENCE,HARDWARE &ARCHITECTURE",
+"연도": 2025
+},
+"0926-5805": {
+"저널": "AUTOMATION INCONSTRUCTION",
+"IF": 12.6,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "ENGINEERING, CIVIL",
+"연도": 2025
+},
+"0732-0582": {
+"저널": "Annual Review of Immunology",
+"IF": 39.8,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "IMMUNOLOGY",
+"연도": 2025
+},
+"0066-4219": {
+"저널": "Annual Review of Medicine",
+"IF": 18.8,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "MEDICINE, RESEARCH &EXPERIMENTAL",
+"연도": 2025
+},
+"2321-3868": {
+"저널": "Burns & Trauma",
+"IF": 11.0,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "SURGERY",
+"연도": 2025
+},
+"0092-8674": {
+"저널": "CELL",
+"IF": 45.1,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "BIOCHEMISTRY &MOLECULAR BIOLOGY",
+"연도": 2025
+},
+"0960-0779": {
+"저널": "CHAOS SOLITONS & FRACTALS",
+"IF": 5.7,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "PHYSICS,MATHEMATICAL",
+"연도": 2025
+},
+"0748-3007": {
+"저널": "CLADISTICS",
+"IF": 8.9,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "ZOOLOGY",
+"연도": 2025
+},
+"0091-7613": {
+"저널": "GEOLOGY",
+"IF": 4.6,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "GEOLOGY",
+"연도": 2025
+},
+"0890-6955": {
+"저널": "INTERNATIONAL JOURNAL OF MACHINE TOOLS & MANUFACTURE",
+"IF": 24.1,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "ENGINEERING,MECHANICAL",
+"연도": 2025
+},
+"2155-8256": {
+"저널": "Journal of Nursing Regulation",
+"IF": 7.5,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "NURSING",
+"연도": 2025
+},
+"2214-109X": {
+"저널": "Lancet Global Health",
+"IF": 22.5,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "PUBLIC, ENVIRONMENTAL & OCCUPATIONAL HEALTH",
+"연도": 2025
+},
+"2666-7762": {
+"저널": "Lancet Regional Health-Europe",
+"IF": 15.8,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "HEALTH CARE SCIENCES& SERVICES",
+"연도": 2025
+},
+"1097-6256": {
+"저널": "NATURE NEUROSCIENCE",
+"IF": 20.3,
+"상위": 0.8,
+"사분위": "Q1",
+"분야": "NEUROSCIENCES",
+"연도": 2025
+},
+"1360-1385": {
+"저널": "TRENDS IN PLANT SCIENCE",
+"IF": 20.7,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "PLANT SCIENCES",
+"연도": 2025
+},
+"1759-4790": {
+"저널": "Nature Reviews Rheumatology",
+"IF": 33.7,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "RHEUMATOLOGY",
+"연도": 2025
+},
+"2589-7500": {
+"저널": "Lancet Digital Health",
+"IF": 25.7,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "MEDICAL INFORMATICS",
+"연도": 2025
+},
+"0190-6011": {
+"저널": "JOURNAL OF ORTHOPAEDIC &SPORTS PHYSICAL THERAPY",
+"IF": 6.9,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "REHABILITATION",
+"연도": 2025
+},
+"2653-6226": {
+"저널": "International Journal of Network Dynamics and Intelligence",
+"IF": 15.3,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "COMPUTER SCIENCE,INFORMATION SYSTEMS",
+"연도": 2025
+},
+"2770-5986": {
+"저널": "iMeta",
+"IF": 44.4,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "MICROBIOLOGY",
+"연도": 2025
+},
+"0162-8828": {
+"저널": "IEEE TRANSACTIONS ON PATTERN ANALYSIS AND MACHINE INTELLIGENCE",
+"IF": 20.4,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "ENGINEERING, ELECTRICAL & ELECTRONIC",
+"연도": 2025
+},
+"2666-5573": {
+"저널": "Computers and Education Open",
+"IF": 12.3,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "EDUCATION & EDUCATIONAL RESEARCH",
+"연도": 2025
+},
+"0144-8617": {
+"저널": "Carbohydrate Polymers",
+"IF": 13.2,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "CHEMISTRY, ORGANIC",
+"연도": 2025
+},
+"2168-0930": {
+"저널": "Cambridge Journal ofMathematics",
+"IF": 4.5,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "MATHEMATICS",
+"연도": 2025
+},
+"2326-8298": {
+"저널": "Annual Review of Statistics andIts Application",
+"IF": 9.8,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "STATISTICS &PROBABILITY",
+"연도": 2025
+},
+"2405-6383": {
+"저널": "Animal Nutrition",
+"IF": 8.3,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "VETERINARY SCIENCES",
+"연도": 2025
+},
+"0003-6900": {
+"저널": "Applied Mechanics Reviews",
+"IF": 19.1,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "MECHANICS",
+"연도": 2025
+},
+"1674-2818": {
+"저널": "International Journal of OralScience",
+"IF": 17.6,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "DENTISTRY, ORALSURGERY & MEDICINE",
+"연도": 2025
+},
+"2168-622X": {
+"저널": "JAMA Psychiatry",
+"IF": 18.0,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "PSYCHIATRY",
+"연도": 2025
+},
+"0031-0239": {
+"저널": "PALAEONTOLOGY",
+"IF": 3.2,
+"상위": 0.9,
+"사분위": "Q1",
+"분야": "PALEONTOLOGY",
+"연도": 2025
+},
+"2470-9476": {
+"저널": "Science Robotics",
+"IF": 25.5,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "ROBOTICS",
+"연도": 2025
+},
+"0944-7113": {
+"저널": "PHYTOMEDICINE",
+"IF": 11.3,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "INTEGRATIVE & COMPLEMENTARY MEDICINE",
+"연도": 2025
+},
+"1474-175X": {
+"저널": "NATURE REVIEWS CANCER",
+"IF": 60.7,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "ONCOLOGY",
+"연도": 2025
+},
+"2662-8457": {
+"저널": "Nature Computational Science",
+"IF": 20.3,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "COMPUTER SCIENCE,THEORY & METHODS",
+"연도": 2025
+},
+"2542-5196": {
+"저널": "Lancet Planetary Health",
+"IF": 20.5,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "PUBLIC, ENVIRONMENTAL & OCCUPATIONAL HEALTH",
+"연도": 2025
+},
+"0168-8278": {
+"저널": "JOURNAL OF HEPATOLOGY",
+"IF": 40.1,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "GASTROENTEROLOGY &HEPATOLOGY",
+"연도": 2025
+},
+"0084-6597": {
+"저널": "Annual Review of Earth andPlanetary Sciences",
+"IF": 15.6,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "GEOSCIENCES,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"0169-409X": {
+"저널": "ADVANCED DRUG DELIVERYREVIEWS",
+"IF": 21.0,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "PHARMACOLOGY &PHARMACY",
+"연도": 2025
+},
+"2524-7972": {
+"저널": "Biochar",
+"IF": 15.1,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "SOIL SCIENCE",
+"연도": 2025
+},
+"0306-0012": {
+"저널": "CHEMICAL SOCIETY REVIEWS",
+"IF": 48.3,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "CHEMISTRY,MULTIDISCIPLINARY",
+"연도": 2025
+},
+"2399-3529": {
+"저널": "Human Reproduction Open",
+"IF": 8.6,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "OBSTETRICS &GYNECOLOGY",
+"연도": 2025
+},
+"0098-7484": {
+"저널": "JAMA-JOURNAL OF THE AMERICAN MEDICAL ASSOCIATION",
+"IF": 65.4,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "MEDICINE, GENERAL &INTERNAL",
+"연도": 2025
+},
+"0378-4754": {
+"저널": "MATHEMATICS ANDCOMPUTERS IN SIMULATION",
+"IF": 4.0,
+"상위": 1.0,
+"사분위": "Q1",
+"분야": "MATHEMATICS, APPLIED",
+"연도": 2025
+}
+}
+}

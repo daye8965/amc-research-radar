@@ -60,6 +60,19 @@ TOP_A = {"Circulation", "Eur Heart J", "J Clin Oncol", "Ann Oncol", "Gastroenter
 TIER_S_CITED = 20.0
 TIER_A_CITED = 10.0
 TIER_B_CITED = 6.0
+# JCR IF 문턱 — docs/journal_if.json(jcr_import.py가 S2Journal PDF에서 만든 것)에 있는 저널은 IF로 매긴다.
+# OpenAlex 값보다 IF를 우선한다(Ann Oncol: OpenAlex 1.8 vs IF 80.4)
+JIF_PATH = Path("docs/journal_if.json")
+TIER_S_IF = 30.0
+TIER_A_IF = 10.0
+TIER_B_IF = 5.0
+
+
+def load_jif():
+    try:
+        return json.loads(JIF_PATH.read_text(encoding="utf-8")).get("저널", {})
+    except Exception:
+        return {}
 
 
 def log(*a):
@@ -277,8 +290,20 @@ def journal_metric(a, cache):
     return max(vals, key=lambda v: v["2y"])
 
 
-def tier_of(a, m):
+def jif_of(a, jif):
+    """이 논문 저널의 JCR 기록 (ISSN 중 하나라도 맞으면). 없으면 None."""
+    recs = [jif[s] for s in a["issn"] if s in jif]
+    return max(recs, key=lambda r: r["IF"]) if recs else None
+
+
+def tier_of(a, m, j=None):
     ab = a["약어"]
+    if j:                                         # JCR IF가 있으면 그것만 본다
+        if ab in TOP_S or j["IF"] >= TIER_S_IF:
+            return "S"
+        if ab in TOP_A or ab.startswith(TOP_A_PREFIX) or j["IF"] >= TIER_A_IF:
+            return "A"
+        return "B" if j["IF"] >= TIER_B_IF else ""
     cited = (m or {}).get("2y") or 0
     if ab in TOP_S or cited >= TIER_S_CITED:
         return "S"
@@ -292,7 +317,9 @@ def tier_of(a, m):
 def score_of(a):
     """보도자료 후보 순서. 저널 등급이 먼저, 그다음 우리가 주도했는지."""
     s = {"S": 60, "A": 40, "B": 20}.get(a["등급"], 0)
-    s += min((a.get("지표") or 0), 40) * 0.5
+    # IF가 있으면 IF를 OpenAlex 축척으로 대략 맞춰 쓴다(NEJM IF 85 ≈ OpenAlex 33)
+    m = a["IF"] / 2.5 if a.get("IF") else (a.get("지표") or 0)
+    s += min(m, 40) * 0.5
     if a["교신"]:
         s += 15
     if a["마지막저자"]:
@@ -345,10 +372,17 @@ def main():
     fetch_journal_stats(all_issn, jcache)
     jcache = {k: v for k, v in jcache.items() if k in set(all_issn)}
 
+    jif = load_jif()
     for p in papers.values():
         m = journal_metric(p, jcache)
+        j = jif_of(p, jif)
         p["지표"] = m["2y"] if m else None
-        p["등급"] = tier_of(p, m)
+        if j:
+            p["IF"], p["IF상위"] = j["IF"], j["상위"]
+        else:
+            p.pop("IF", None)
+            p.pop("IF상위", None)
+        p["등급"] = tier_of(p, m, j)
         p["점수"] = score_of(p)
         p["후보"] = is_candidate(p)
         # 최상위 저널에 우리가 공동저자로만 들어간 논문 — 후보는 아니지만 따로 보여 준다
@@ -365,6 +399,8 @@ def main():
         "생성": NOW.strftime("%Y-%m-%d %H:%M"),
         # 화면의 '등급 기준' 설명이 이 값을 그대로 읽는다 — 기준을 바꾸면 설명도 함께 바뀐다
         "기준": {"S문턱": TIER_S_CITED, "A문턱": TIER_A_CITED, "B문턱": TIER_B_CITED,
+                 "S_IF": TIER_S_IF, "A_IF": TIER_A_IF, "B_IF": TIER_B_IF,
+                 "JCR저널수": len(jif), "JCR연도": sorted({r["연도"] for r in jif.values()}),
                  "S저널": sorted(TOP_S), "A저널": sorted(TOP_A), "A접두어": [x.strip() for x in TOP_A_PREFIX],
                  "보관일수": KEEP_DAYS},
         "상태": status,

@@ -15,6 +15,8 @@
 | `research_radar.py` | PubMed·OpenAlex 수집, 등급·후보 판정 → `docs/research.json` |
 | `press_match.py` | 우리가 배포한 보도자료가 어느 논문인지 맞춤 (아래 '보도자료 배포 표시') |
 | `name_match.py` | 한글 이름 → 영문 표기 후보. `김남국` ↔ `Nam-Kug Kim` |
+| `jcr_import.py` | S2Journal JCR 화면을 PDF로 저장한 파일에서 IF를 뽑아 `docs/journal_if.json`에 합침 (로컬에서 손으로 돌림) |
+| `docs/journal_if.json` | 저널별 JCR IF·분야 상위%·사분위. 지금은 2025년판 **분야 상위 1% 저널 187개**만 |
 | `docs/index.html` | 페이지 본체 (단일 파일, `research.json`을 읽어 렌더링). 외부 의존은 `xlsx-js-style`(엑셀) 하나 |
 | `docs/research.json` | 수집 결과와 보도자료 판정(`보도자료판정`). **사람이 직접 편집하지 말 것** |
 | `.github/workflows/research.yml` | 매일 1회 수집·커밋. 수동 실행 때 `days`로 다시 훑을 기간을 정합니다 |
@@ -33,7 +35,21 @@
 
 ### 저널 등급
 
-Clarivate IF는 무료 API가 없어 **OpenAlex `2yr_mean_citedness`** 를 씁니다(IF와 같은 정의).
+**JCR IF가 있는 저널은 IF로, 없는 저널은 OpenAlex 값으로** 매깁니다(2026-11-04부터).
+
+- **IF 출처** — 울산대학교 아산의학도서관 S2Journal(`s2journal.bwise.kr`)의 JCR 랭킹. **내려받기 기능이 없어
+  화면을 PDF로 인쇄해** `jcr_import.py`로 읽습니다. 첫 PDF는 '상위 1%'로 거른 화면 3장(219행 → 저널 187개)이라
+  **우리 논문 저널 899개 중 19개만** IF가 있습니다(Lancet 109.0 · NEJM 85.0 · Ann Oncol 80.4 · Nature 56.1 · Nat Med 52.3 등).
+  '상위 5%·10%' 화면을 더 PDF로 넣으면 `python jcr_import.py <pdf…>`로 합쳐집니다(같은 ISSN은 최근 연도가 이김).
+- **자동으로 긁지 않습니다.** 사이트 내부 목록 주소를 호출해 받으려다 권한 확인에서 '사이트 접근 우회'로 막혔고,
+  JCR은 Clarivate 유료 데이터라 대량 수집해 공개 저장소에 올리는 것도 맞지 않습니다.
+  **PDF 원본은 `.gitignore`로 올리지 않고**, `journal_if.json`에는 저널명·ISSN·IF·상위%·사분위만 둡니다.
+- IF 문턱: **S 30 이상 · A 10 이상 · B 5 이상**(`TIER_*_IF`). 목록(`TOP_S`·`TOP_A`·접두어)은 그대로 함께 봅니다.
+- 정렬 점수에는 IF를 2.5로 나눠 OpenAlex 축척에 대략 맞춰 씁니다(NEJM 85 → 34 ≈ OpenAlex 33).
+- 화면은 `IF 109.0`(파란 굵은 글씨, JCR) / `피인용 21.6`(OpenAlex)으로 **구분해 적습니다.** 엑셀도 두 열로 나눕니다.
+- JCR은 1년에 한 번(보통 6월) 나옵니다. **새 판이 나오면 PDF를 다시 넣으세요.**
+
+OpenAlex 쪽 — Clarivate IF는 무료 API가 없어 **OpenAlex `2yr_mean_citedness`** 를 씁니다(IF와 같은 정의).
 **값이 IF보다 작게 나옵니다**(Lancet IF 88 → 21.6, NEJM → 33.2). 문턱을 IF 숫자로 생각하면 안 됩니다.
 
 - S = `TOP_S`(NEJM·Lancet·JAMA·BMJ·Nature·Science·Cell·Nat Med) 또는 20 이상
@@ -85,6 +101,8 @@ Clarivate IF는 무료 API가 없어 **OpenAlex `2yr_mean_citedness`** 를 씁�
 - **잰 결과(2026-11-04, 1년치)** — 의료진이 적힌 보도자료 93건 중 82건에 후보가 있었고,
   제목만 보고 정답을 알 수 있는 14건은 **전부 후보 안에 정답이 있었습니다**(12건 1순위, 2건 2순위).
   Claude의 최종 고르기는 키가 이 저장소에 들어간 뒤 첫 실행에서 확인해야 합니다.
+- **배포 예정 논문은 후보에는 이미 보일 수 있습니다** — 논문은 공개돼 있으니까요(예: 2026-11-05 배포 예정인
+  Lancet PCI 장기성적 논문이 11-04에 후보 목록 맨 위에 있음). 가리는 것은 '보도자료로 나간다'는 표시뿐입니다.
 - 화면의 `📣 배포` 딱지에 마우스를 올리면 보도자료 제목과 AI 근거가 보입니다.
 - `보도자료판정`에는 `확신`·`고른것`(확신이 낮아 안 붙인 PMID도)이 남아 있어 나중에 문턱을 조정할 때 씁니다.
 

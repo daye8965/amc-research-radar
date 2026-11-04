@@ -70,6 +70,7 @@ td{padding:10px 8px;vertical-align:top}
 .tier.B{background:#f0f0ec;color:#666}
 .journal{font-size:12px;line-height:1.4}
 .journal .m{font-family:var(--mono);font-size:10px;color:var(--muted);display:block}
+.journal .m.if{color:var(--accent);font-weight:600}
 .authors{font-size:11px;color:var(--muted);line-height:1.5}
 .authors b{color:var(--blue);font-weight:600}
 .authors .cnt{display:block;font-family:var(--mono);font-size:10px}
@@ -228,6 +229,11 @@ async function init() {
 
 // 등급 기준 — research.json의 '기준'(research_radar.py가 쓰는 값 그대로)과
 // 지금 데이터에서 실제로 그 등급을 받은 저널을 보여 준다
+// 저널 지표 표시 — JCR IF가 있으면 IF, 없으면 OpenAlex 2년 평균 피인용
+function metricLabel(p) {
+  if (p['IF'] != null) return `IF ${p['IF'].toFixed(1)}`;
+  return p['지표'] != null ? `피인용 ${p['지표'].toFixed(1)}` : '지표 없음';
+}
 function renderTierGuide() {
   const g = data?.['기준'];
   if (!g || g['S문턱'] == null) { $('tier-guide').hidden = true; return; }
@@ -235,25 +241,30 @@ function renderTierGuide() {
   const seen = {S: new Map(), A: new Map(), B: new Map()};
   for (const p of P) if (seen[p['등급']]) {
     const k = p['약어'] || p['저널'];
-    const cur = seen[p['등급']].get(k) || {n: 0, m: p['지표']};
+    const cur = seen[p['등급']].get(k) || {n: 0, m: metricLabel(p)};
     cur.n++; seen[p['등급']].set(k, cur);
   }
   const top = t => [...seen[t]].sort((a, b) => b[1].n - a[1].n).slice(0, 12)
-    .map(([k, v]) => `${esc(k)} <span style="color:var(--muted)">${v.m != null ? v.m.toFixed(1) : '—'} · ${v.n}편</span>`).join(', ');
+    .map(([k, v]) => `${esc(k)} <span style="color:var(--muted)">${v.m} · ${v.n}편</span>`).join(', ');
+  const jcr = g['JCR저널수'] ? `JCR ${(g['JCR연도'] || []).join('·')} IF` : null;
+  const ifOr = (t, c) => jcr ? `IF <b>${g[t]}</b> 이상 (IF가 없으면 2년 평균 피인용 <b>${g[c]}</b> 이상)` : `2년 평균 피인용 <b>${g[c]}</b> 이상`;
   $('tier-body').innerHTML = `
-    등급은 <b>저널</b>로만 매깁니다. 숫자는 OpenAlex의 <b>최근 2년 평균 피인용</b>(2yr mean citedness)입니다 —
-    IF와 같은 방식으로 계산하지만 값이 IF보다 작게 나옵니다(예: NEJM 33.2, Lancet 21.6).
+    등급은 <b>저널</b>로만 매깁니다. ${jcr
+      ? `숫자는 <b>${jcr}</b>(아산의학도서관 S2Journal, ${g['JCR저널수']}개 저널)를 먼저 쓰고,
+         거기 없는 저널은 OpenAlex의 <b>최근 2년 평균 피인용</b>을 씁니다. 피인용은 IF와 같은 방식이지만 값이 작게 나옵니다
+         (예: NEJM IF 85.0 ↔ 피인용 33.2). 화면에는 <b>IF</b> 또는 <b>피인용</b>으로 구분해 적습니다.`
+      : `숫자는 OpenAlex의 <b>최근 2년 평균 피인용</b>입니다 — IF와 같은 방식이지만 값이 작게 나옵니다(예: NEJM 33.2).`}
     <table>
       <tr><th>등급</th><th>조건 (하나만 맞으면 됨)</th></tr>
-      <tr><td><span class="tier S">S</span></td><td>최상위 저널: ${g['S저널'].map(esc).join(' · ')}<br>또는 2년 평균 피인용 <b>${g['S문턱']}</b> 이상</td></tr>
+      <tr><td><span class="tier S">S</span></td><td>최상위 저널: ${g['S저널'].map(esc).join(' · ')}<br>또는 ${ifOr('S_IF', 'S문턱')}</td></tr>
       <tr><td><span class="tier A">A</span></td><td>분야 최상위 저널: ${g['A저널'].map(esc).join(' · ')}<br>
         저널 가족: ${g['A접두어'].map(x => esc(x) + (/ $|Lancet|JAMA|Nat Rev/.test(x) ? ' …' : '')).join(' · ')}<br>
-        또는 2년 평균 피인용 <b>${g['A문턱']}</b> 이상</td></tr>
-      <tr><td><span class="tier B">B</span></td><td>2년 평균 피인용 <b>${g['B문턱']}</b> 이상</td></tr>
+        또는 ${ifOr('A_IF', 'A문턱')}</td></tr>
+      <tr><td><span class="tier B">B</span></td><td>${ifOr('B_IF', 'B문턱')}</td></tr>
     </table>
     <b>보도자료 후보</b>는 S·A 중에서 우리 의료진이 <b>제1·교신·마지막 저자</b>인 연구 논문입니다
     (댓글·사설·정정 등은 제외). S 저널에 공동저자로만 들어간 논문은 '최상위 저널 참여'로 따로 모읍니다.
-    <div style="margin-top:6px">지금 목록에서 실제로 잡힌 저널 (2년 평균 피인용 · 편수, 많은 순):</div>
+    <div style="margin-top:6px">지금 목록에서 실제로 잡힌 저널 (지표 · 편수, 많은 순):</div>
     <div><span class="tier S">S</span> ${top('S') || '—'}</div>
     <div style="margin-top:3px"><span class="tier A">A</span> ${top('A') || '—'}</div>
     <div style="margin-top:3px"><span class="tier B">B</span> ${top('B') || '—'}</div>`;
@@ -379,7 +390,7 @@ function render() {
       return `<tr>
         <td class="td-date">${since && (p['등록일'] || '') >= since ? '<span class="new">NEW</span><br>' : ''}${(p['등록일'] || '').slice(5).replace('-', '/')}</td>
         <td>${p['등급'] ? `<span class="tier ${p['등급']}">${p['등급']}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
-        <td class="journal">${esc(p['약어'] || p['저널'])}<span class="m">${p['지표'] != null ? '2년 피인용 ' + p['지표'].toFixed(1) : '지표 없음'}</span></td>
+        <td class="journal">${esc(p['약어'] || p['저널'])}<span class="m${p['IF'] != null ? ' if' : ''}" title="${p['IF'] != null ? `JCR IF · 분야 상위 ${p['IF상위']}%` : 'OpenAlex 최근 2년 평균 피인용 (JCR IF 아님)'}">${metricLabel(p)}</span></td>
         <td class="td-title"><a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/" target="_blank" rel="noopener">${esc(p['제목'])}</a>${types.length ? `<span class="types">${types.map(esc).join(' · ')}</span>` : ''}
           ${p.pr ? `<div class="pr-title">📣 ${esc(p.pr['보도자료'])}</div>` : ''}
           ${showConcl && p['결론'] ? `<div class="concl">${esc(p['결론'])}</div>` : ''}</td>
@@ -427,16 +438,16 @@ function downloadExcel() {
   if (!data) return;
   const {views} = filtered();
   const NAME = {cand: '보도자료 후보', join: '최상위 저널 참여', marked: '보도자료 배포', all: '전체'};
-  const rows = [['등록일', '출판일', '등급', '2년 피인용', '저널', '제목', '우리 저자', '교신(추정)', '제1저자', '마지막저자',
+  const rows = [['등록일', '출판일', '등급', 'IF(JCR)', '2년 피인용(OpenAlex)', '저널', '제목', '우리 저자', '교신(추정)', '제1저자', '마지막저자',
                  '진료과', '결론', '보도자료', '배포일', 'PMID', 'DOI', '링크']];
   views[view].forEach(p => rows.push([
-    p['등록일'] || '', p['출판일'] || '', p['등급'] || '', p['지표'] ?? '', p['저널'] || '', p['제목'] || '',
+    p['등록일'] || '', p['출판일'] || '', p['등급'] || '', p['IF'] ?? '', p['지표'] ?? '', p['저널'] || '', p['제목'] || '',
     (p['우리저자'] || []).join(', '), (p['교신'] || []).join(', '), p['제1저자'] ? 'Y' : '', p['마지막저자'] ? 'Y' : '',
     (p['진료과'] || []).map(deptKo).join(', '), p['결론'] || '',
     p.pr?.['보도자료'] || '', p.pr?.['배포일'] || '', p.pmid, p.doi || '', `https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/`,
   ]));
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:11},{wch:11},{wch:5},{wch:8},{wch:28},{wch:70},{wch:30},{wch:18},{wch:7},{wch:7},
+  ws['!cols'] = [{wch:11},{wch:11},{wch:5},{wch:8},{wch:10},{wch:28},{wch:70},{wch:30},{wch:18},{wch:7},{wch:7},
                  {wch:18},{wch:60},{wch:8},{wch:11},{wch:10},{wch:26},{wch:40}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, styleSheet(ws), NAME[view]);

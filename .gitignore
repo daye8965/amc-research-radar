@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+
+# JCR 원본 (Clarivate 유료 데이터) — 저장소에 올리지 않는다
+Journal*.pdf
+journal*.pdf
