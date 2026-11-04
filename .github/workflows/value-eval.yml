@@ -1,0 +1,21 @@
+name: AI 보도가치 측정 (수동)
+
+# value_eval.py — 팀이 실제로 보도자료를 낸 논문을 AI가 얼마나 '높음'으로 고르는지 잰다.
+# 결과는 로그에만 남고 아무것도 커밋하지 않는다. 프롬프트를 바꾸기 전후에 돌린다(한 번에 몇 센트).
+on:
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests anthropic
+      - name: 측정
+        timeout-minutes: 20
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python value_eval.py

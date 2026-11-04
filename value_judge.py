@@ -17,10 +17,14 @@ from press_match import Judge
 VALUE_VER = 2           # 프롬프트·기준을 바꾸면 올린다 — 판이 다른 판정은 다시 묻는다
 # v2(2026-11-04): v1은 '저널 명성은 보지 말라'고 해서 Lancet·NEJM 논문이 '술기 비교'로 보통이 될 수 있었다.
 # 실제 보도자료는 'NEJM 3번째 논문 게재'·'(IF 81.2)'처럼 저널 게재 자체를 소재로 쓴다.
+# v3(2026-11-04): v2는 팀이 실제로 보도자료를 낸 23편 중 5편만 '높음'이었다. 팀은 '첫 기준·가이드라인',
+# '새 진단 기술', '한국인 데이터', '난치병 치료 가능성'을 저널 등급과 상관없이 낸다. 그래서 기준을 팀 쪽으로 옮기고,
+# 팀이 실제로 낸 논문을 예시로 보여 준다(examples). 측정은 value_eval.py — 예시와 맞히는 논문을 갈라서 잰다.
 BATCH = 20
 MAX_CALLS = int(os.environ.get("VALUE_MAX_CALLS", "150") or 150)
 
-SYSTEM = """당신은 서울아산병원 홍보팀에서 보도자료 기획을 돕습니다. 우리 병원 의료진이 주도한 논문 목록을 받고,
+# v2 프롬프트 — value_eval.py가 비교용으로 쓴다
+SYSTEM_V2 = """당신은 서울아산병원 홍보팀에서 보도자료 기획을 돕습니다. 우리 병원 의료진이 주도한 논문 목록을 받고,
 각 논문이 **일반 언론(종합일간지·방송·포털)** 에 보도자료로 낼 가치가 얼마나 되는지 판단합니다.
 각 논문에 저널 등급(S·A·B)과 IF(또는 피인용)가 붙어 있습니다.
 **최상위 학술지 게재는 그 자체로 강한 기사 소재입니다**("세계 최고 권위 학술지 ○○ 게재"). S 등급 저널의 연구 논문은 높음,
@@ -36,6 +40,48 @@ A 등급 저널의 임상 결과(환자 대상 치료·진단·예후)는 높음
 '높음'은 전체의 10~20% 정도가 되도록 고르세요.
 각 논문마다 pmid, 가치(높음·보통·낮음), 한줄(기사 제목처럼 쓴 한국어 요약 40자 이내),
 이유(판단 근거 한국어 60자 이내)를 돌려주세요. 받은 논문은 빠짐없이 모두 답합니다."""
+
+SYSTEM_V3 = """당신은 서울아산병원 홍보팀에서 보도자료 기획을 돕습니다. 우리 병원 의료진이 주도한 논문 목록을 받고,
+**우리 팀이 이 논문으로 보도자료를 낼 만한지** 판단합니다. 아래 '팀이 실제로 낸 예시'가 기준입니다 — 일반적인 뉴스 감각보다
+이 팀이 실제로 고른 논문의 모양을 따르세요.
+
+이 팀이 고르는 논문의 특징:
+  · **저널 등급과 상관없이** 낸다. Sci Rep·BMC Geriatr·Biomater Res 같은 저널의 논문도 냈다.
+  · 우리 의료진이 **새 진단·검사 기술**을 만들었거나 정확도를 크게 높인 것(혈액·소변·내시경·영상·AI 진단, 바이오마커)
+  · **국내·세계 첫 기준·가이드라인·공식**을 제시한 것(희귀 종양 치료 가이드라인, 수술 기준 공식)
+  · **난치·희귀질환의 새 치료 가능성**(오가노이드·줄기세포·면역치료·약물 재창출 — 기초연구라도 치료로 이어지는 메시지가 분명하면)
+  · **한국인·아시아인 환자 데이터**로 발생률·위험 요인·장기 성적을 밝힌 것
+  · 치료를 **더 쉽게·덜 힘들게** 바꾸는 것(치료 횟수 줄이기, 약 중단해도 되는지, 내시경으로 수술 대신)
+  · 최상위 학술지(S 등급) 게재, A 등급 저널의 임상 결과
+
+높음 — 위 특징이 분명하고, 한 문장으로 일반인에게 설명되는 결과가 있다
+보통 — 의미는 있지만 메시지가 전문적이거나 결과가 애매하다(단순 술기 비교, 예후 인자 나열, 소규모 후향 분석)
+낮음 — 증례 보고, 리뷰·해설, 방법론·통계 기법, 환자와 연결이 먼 기초 기전, 우리 병원 역할이 작아 보이는 것
+
+'높음'은 전체의 15% 안팎이 되도록 고르세요.
+각 논문마다 pmid, 가치(높음·보통·낮음), 한줄(기사 제목처럼 쓴 한국어 요약 40자 이내),
+이유(판단 근거 한국어 60자 이내)를 돌려주세요. 받은 논문은 빠짐없이 모두 답합니다.
+{examples}"""
+
+MAX_EXAMPLES = 40
+
+
+def example_text(papers):
+    """팀이 실제로 보도자료를 낸 논문 → 프롬프트 예시. 보도자료가 쌓일수록 저절로 늘어난다."""
+    ex = sorted([p for p in papers if p.get("pr")], key=lambda p: p["pr"].get("배포일", ""), reverse=True)
+    if not ex:
+        return ""
+    lines = ["", "팀이 실제로 보도자료로 낸 논문 (보도자료 제목 ← 저널 | 논문 제목):"]
+    for p in ex[:MAX_EXAMPLES]:
+        lines.append(f"- {p['pr']['보도자료']} ← {p.get('약어') or p.get('저널')} | {p['제목']}")
+    return "\n".join(lines)
+
+
+def build_system(examples_from, version=None):
+    if (version or VALUE_VER) == 2:
+        return SYSTEM_V2
+    return SYSTEM_V3.replace("{examples}", example_text(examples_from))
+
 
 SCHEMA = {
     "type": "object",
@@ -85,7 +131,8 @@ def judge_value(papers, cache, status):
     todo = [p for p in targets if (cache.get(p["pmid"]) or {}).get("판") != VALUE_VER]
     todo.sort(key=lambda p: p.get("등록일", ""), reverse=True)       # 새 논문부터
 
-    judge = Judge(system=SYSTEM, schema=SCHEMA, max_calls=MAX_CALLS, max_tokens=8000)
+    # 예시는 이 판정 실행에서 고정 — 보도자료가 새로 붙은 논문이 생겨도 이미 판정한 것은 다시 묻지 않는다
+    judge = Judge(system=build_system(papers), schema=SCHEMA, max_calls=MAX_CALLS, max_tokens=8000)
     asked = 0
     for i in range(0, len(todo), BATCH):
         if not judge.ready():
