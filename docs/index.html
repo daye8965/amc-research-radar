@@ -47,7 +47,10 @@ main{padding:20px 32px;max-width:1320px;margin:0 auto}
 .sort-box{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
 
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;text-align:left;font-family:var(--font);transition:border-color .12s,background .12s}
+.stat-card:hover{border-color:var(--accent)}
+.stat-card.on{border-color:var(--accent);background:var(--accent-bg);box-shadow:inset 0 -3px 0 var(--accent)}
+.stat-card .sub{font-size:11px;color:#c0392b;font-weight:600;margin-left:6px;font-family:var(--font)}
 .stat-card .label{font-size:10px;color:var(--muted);letter-spacing:.5px;margin-bottom:3px}
 .stat-card .value{font-size:20px;font-weight:600;font-family:var(--mono)}
 
@@ -148,7 +151,6 @@ td{padding:10px 8px;vertical-align:top}
     </details>
   </div>
   <div class="period" id="period"></div>
-  <div class="views" id="views"></div>
   <div class="stats-row" id="stats"></div>
   <div class="table-wrap" id="table"></div>
   <div class="pagination" id="pag"></div>
@@ -327,8 +329,11 @@ function copyPmid(el, pmid) {
   const done = () => { const t = el.textContent; el.textContent = '복사됨'; setTimeout(() => el.textContent = t, 900); };
   if (navigator.clipboard) navigator.clipboard.writeText(pmid).then(done, () => {});
 }
-function statCard(label, value, color) {
-  return `<div class="stat-card"><div class="label">${label}</div><div class="value" style="color:${color}">${typeof value === 'number' ? value.toLocaleString() : value}</div></div>`;
+// 카드 = 보기 버튼. 누르면 아래 목록이 그 보기로 바뀐다
+function statCard(key, label, value, color, sub = '') {
+  return `<button class="stat-card${view === key ? ' on' : ''}" onclick="setView('${key}')">
+    <div class="label">${label}</div>
+    <div class="value" style="color:${color}">${value.toLocaleString()}${sub ? `<span class="sub">${sub}</span>` : ''}</div></button>`;
 }
 function prBadge(p) {
   if (!p.pr) return '';
@@ -370,22 +375,18 @@ function render() {
     <span style="margin-left:6px">연도</span>
     <button class="pill${year === '' ? ' on' : ''}" onclick="setYear('')">전체 <span class="n">${all.length.toLocaleString()}</span></button>`
     + Object.keys(years).sort().reverse().map(y =>
-      `<button class="pill${year === y ? ' on' : ''}" onclick="setYear('${y}')">${y} <span class="n">${years[y].toLocaleString()}</span></button>`).join('');
-  const VIEWS = [['cand', '⭐ 보도자료 후보'], ['ai', '🤖 AI 보도가치 높음'], ['join', '🌐 최상위 저널 참여'], ['marked', '📣 보도자료 배포'], ['all', '전체']];
-  $('views').innerHTML = VIEWS.map(([k, label]) =>
-    `<button class="pill${view === k ? ' on' : ''}" onclick="setView('${k}')">${label} <span class="n">${views[k].length}</span></button>`
-  ).join('') + `<span class="sort-box">정렬
-    <button class="pill${sortBy === 'date' ? ' on' : ''}" onclick="setSort('date')">최신순</button>
-    <button class="pill${sortBy === 'score' ? ' on' : ''}" onclick="setSort('score')">점수순</button></span>`;
-
+      `<button class="pill${year === y ? ' on' : ''}" onclick="setYear('${y}')">${y} <span class="n">${years[y].toLocaleString()}</span></button>`).join('')
+    + `<span class="sort-box">정렬
+      <button class="pill${sortBy === 'date' ? ' on' : ''}" onclick="setSort('date')">최신순</button>
+      <button class="pill${sortBy === 'score' ? ' on' : ''}" onclick="setSort('score')">점수순</button></span>`;
   const since = newSince();
+  const fresh = views.cand.filter(p => (p['등록일'] || '') >= since).length;   // 최근 이틀 새 후보
   $('stats').innerHTML = [
-    statCard('논문', base.length, 'var(--accent)'),
-    statCard('보도자료 후보', views.cand.length, 'var(--accent)'),
-    statCard('새 후보 (최근 이틀)', views.cand.filter(p => (p['등록일'] || '') >= since).length, '#c0392b'),
-    statCard('AI 보도가치 높음', views.ai.length, '#6a3fb5'),
-    statCard('최상위 저널 참여', views.join.length, 'var(--accent)'),
-    statCard('보도자료 배포', views.marked.length, '#1a7a3c'),
+    statCard('cand', '⭐ 보도자료 후보', views.cand.length, 'var(--accent)', fresh ? `+${fresh} 새로` : ''),
+    statCard('ai', '🤖 AI 보도가치 높음', views.ai.length, '#6a3fb5'),
+    statCard('join', '🌐 최상위 저널 참여', views.join.length, 'var(--accent)'),
+    statCard('marked', '📣 보도자료 배포', views.marked.length, '#1a7a3c'),
+    statCard('all', '전체 논문', views.all.length, 'var(--muted)'),
   ].join('');
 
   const rows = views[view];
