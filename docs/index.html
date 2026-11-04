@@ -383,9 +383,9 @@ function render() {
   const fresh = views.cand.filter(p => (p['등록일'] || '') >= since).length;   // 최근 이틀 새 후보
   $('stats').innerHTML = [
     statCard('cand', '⭐ 보도자료 후보', views.cand.length, 'var(--accent)', fresh ? `+${fresh} 새로` : ''),
+    statCard('marked', '📣 보도자료 배포', views.marked.length, '#1a7a3c'),
     statCard('ai', '🤖 AI 보도가치 높음', views.ai.length, '#6a3fb5'),
     statCard('join', '🌐 최상위 저널 참여', views.join.length, 'var(--accent)'),
-    statCard('marked', '📣 보도자료 배포', views.marked.length, '#1a7a3c'),
     statCard('all', '전체 논문', views.all.length, 'var(--muted)'),
   ].join('');
 
