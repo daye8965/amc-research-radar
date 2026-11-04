@@ -48,7 +48,11 @@ main{padding:20px 32px;max-width:1320px;margin:0 auto}
 .pill:hover{color:var(--text)}
 .pill.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:600}
 .pill .n{font-family:var(--mono);font-size:11px;opacity:.75;margin-left:2px}
-.sort-box{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+thead th.sortable{cursor:pointer;user-select:none}
+thead th.sortable:hover{color:var(--accent)}
+thead th.sortable.on{color:var(--accent)}
+thead th .arrow{margin-left:3px;font-size:9px;opacity:.45}
+thead th.on .arrow{opacity:1}
 
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;text-align:left;font-family:var(--font);transition:border-color .12s,background .12s}
@@ -106,7 +110,6 @@ td{padding:10px 8px;vertical-align:top}
 @media(max-width:700px){
   header,.filter-bar{padding-left:16px;padding-right:16px}
   main{padding:16px}
-  .sort-box{margin-left:0}
 }
 </style>
 </head>
@@ -175,7 +178,8 @@ td{padding:10px 8px;vertical-align:top}
 const PAGE_SIZE = 20;
 let data = null;
 let view = 'cand';     // cand 보도자료 후보 · ai AI 보도가치 높음 · join 최상위 저널 참여 · marked 보도자료 배포 · all 전체
-let sortBy = 'date';   // date 최신 등록순 · score 점수순
+// 열 제목을 눌러 정렬 — 처음 누르면 내림차순, 다시 누르면 오름차순
+let sortCol = 'date', sortAsc = false;
 let page = 1;
 let year = '';         // '' 전체 · '2026' 등 — PubMed 등록일의 연도
 
@@ -320,20 +324,49 @@ function filtered() {
     ai:     base.filter(p => p['AI가치']?.['가치'] === '높음'),
     all:    base.filter(p => !lead || isLead(p)),
   };
-  const cmp = sortBy === 'score'
-    ? (a, b) => b['점수'] - a['점수'] || (b['등록일'] || '').localeCompare(a['등록일'] || '')
-    : (a, b) => (b['등록일'] || '').localeCompare(a['등록일'] || '') || b['점수'] - a['점수'];
+  const key = SORT_KEYS[sortCol] || SORT_KEYS.date;
+  const dir = sortAsc ? 1 : -1;
+  // 같은 값이면 늘 최신 등록·높은 점수가 위로 — 방향과 상관없이
+  const cmp = (a, b) => {
+    const x = key(a), y = key(b);
+    const c = typeof x === 'string' ? x.localeCompare(y, 'ko') : x - y;
+    return c * dir || (b['등록일'] || '').localeCompare(a['등록일'] || '') || b['점수'] - a['점수'];
+  };
   for (const k in views) views[k].sort(cmp);
   return {base, views};
 }
 
 function setView(v) { view = v; page = 1; render(); }
 function setYear(y) { year = y; page = 1; render(); }
-function setSort(v) { sortBy = v; page = 1; render(); }
+// 정렬 기준. 숫자는 클수록, 문자는 뒤로 갈수록 '내림차순'에서 위에 온다
+const TIER_RANK = {S: 3, A: 2, B: 1};
+const AI_RANK = {'높음': 3, '보통': 2, '낮음': 1};
+// IF가 없으면 OpenAlex 값을 2배 해 IF 축척에 대략 맞춘다(정렬용). 2.5배로 하면 STTT(51→127)가 Lancet(IF 109)을 앞질렀다
+const metricNum = p => p['IF'] != null ? p['IF'] : (p['지표'] != null ? p['지표'] * 2 : -1);
+const SORT_KEYS = {
+  date:  p => p['등록일'] || '',
+  tier:  p => (TIER_RANK[p['등급']] || 0) * 1000 + Math.max(metricNum(p), 0),
+  metric: p => metricNum(p),
+  // 한글 진료과 → 영어 그대로인 것 → 진료과 없음 순 (그냥 비교하면 영어가 한글보다 앞에 온다)
+  dept:  p => { const d = deptKo((p['진료과'] || [])[0] || ''); return (!d ? '2' : /^[가-힣]/.test(d) ? '0' : '1') + d; },
+  ai:    p => AI_RANK[p['AI가치']?.['가치']] || 0,
+  pr:    p => p.pr?.['배포일'] || '',
+};
+function setSort(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = col === 'dept'; }   // 진료과는 가나다순이 자연스러워 오름차순부터
+  page = 1; render();
+}
+function th(col, label, width, title = '') {
+  const on = sortCol === col;
+  return `<th class="sortable${on ? ' on' : ''}" style="width:${width}" onclick="setSort('${col}')"${title ? ` title="${title}"` : ''}>`
+    + `${label}<span class="arrow">${on ? (sortAsc ? '▲' : '▼') : '↕'}</span></th>`;
+}
 function resetFilters() {
   ['date-from', 'date-to', 'search-input', 'dept-filter'].forEach(id => $(id).value = '');
   $('lead-only').checked = false;
   year = '';
+  sortCol = 'date'; sortAsc = false;
   page = 1; render();
 }
 function copyPmid(el, pmid) {
@@ -386,10 +419,7 @@ function render() {
     <span style="margin-left:6px">연도</span>
     <button class="pill${year === '' ? ' on' : ''}" onclick="setYear('')">전체 <span class="n">${all.length.toLocaleString()}</span></button>`
     + Object.keys(years).sort().reverse().map(y =>
-      `<button class="pill${year === y ? ' on' : ''}" onclick="setYear('${y}')">${y} <span class="n">${years[y].toLocaleString()}</span></button>`).join('')
-    + `<span class="sort-box">정렬
-      <button class="pill${sortBy === 'date' ? ' on' : ''}" onclick="setSort('date')">최신순</button>
-      <button class="pill${sortBy === 'score' ? ' on' : ''}" onclick="setSort('score')">점수순</button></span>`;
+      `<button class="pill${year === y ? ' on' : ''}" onclick="setYear('${y}')">${y} <span class="n">${years[y].toLocaleString()}</span></button>`).join('');
   const since = newSince();
   const fresh = views.cand.filter(p => (p['등록일'] || '') >= since).length;   // 최근 이틀 새 후보
   $('stats').innerHTML = [
@@ -414,15 +444,15 @@ function render() {
   const showConcl = view !== 'all';
   $('table').innerHTML = `<table>
     <thead><tr>
-      <th style="width:58px" title="PubMed 등록일">등록</th>
-      <th style="width:40px">등급</th>
-      <th style="width:150px">저널</th>
+      ${th('date', '등록', '64px', 'PubMed 등록일')}
+      ${th('tier', '등급', '52px', 'S → A → B, 같은 등급은 IF·피인용 순')}
+      ${th('metric', '저널', '150px', 'IF·피인용 순')}
       <th>논문</th>
       <th style="width:170px">우리 저자</th>
-      <th style="width:100px">진료과</th>
-      <th style="width:150px" title="Claude가 일반 언론 보도 소재로서의 힘을 판단 (우리가 주도한 연구 논문만)">AI 보도가치</th>
+      ${th('dept', '진료과', '100px')}
+      ${th('ai', 'AI 보도가치', '150px', 'Claude가 일반 언론 보도 소재로서의 힘을 판단 (우리가 주도한 연구 논문만)')}
       <th style="width:72px">PMID</th>
-      <th style="width:62px">보도자료</th>
+      ${th('pr', '보도자료', '70px', '배포일 순')}
     </tr></thead>
     <tbody>${slice.map(p => {
       const roles = [p['제1저자'] && '제1', (p['교신'] || []).length && '교신', p['마지막저자'] && '마지막']
