@@ -90,6 +90,7 @@ td{padding:10px 8px;vertical-align:top}
 .pmid{font-family:var(--mono);font-size:11px;color:var(--muted);cursor:copy;white-space:nowrap}
 .pmid:hover{color:var(--accent)}
 .new{font-size:9px;font-weight:700;color:#c0392b}
+.late{font-size:9px;color:#b45309;margin-top:2px;cursor:help;white-space:nowrap}
 .pr{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap}
 .pr.배포{background:#1a7a3c;color:#fff}
 .pr-title{font-size:12px;color:#1a7a3c;font-weight:600;margin-top:3px}
@@ -159,9 +160,9 @@ td{padding:10px 8px;vertical-align:top}
 </header>
 
 <div class="filter-bar">
-  <input type="date" id="date-from" title="PubMed 등록일부터">
+  <input type="date" id="date-from" title="공개일부터">
   <span style="color:var(--muted);font-size:12px">~</span>
-  <input type="date" id="date-to" title="PubMed 등록일까지">
+  <input type="date" id="date-to" title="공개일까지">
   <select id="dept-filter"><option value="">전체 진료과</option></select>
   <input type="text" id="search-input" placeholder="제목·저널·저자 검색 (-제외어)">
   <label class="check-label" title="'전체' 보기에서 우리 의료진이 제1·교신·마지막 저자인 논문만"><input type="checkbox" id="lead-only"> 우리가 주도한 논문만</label>
@@ -228,7 +229,9 @@ let view = 'cand';     // cand 보도자료 후보 · ai AI 보도가치 높음 
 // 열 제목을 눌러 정렬 — 처음 누르면 내림차순, 다시 누르면 오름차순
 let sortCol = 'date', sortAsc = false;
 let page = 1;
-let year = '';         // '' 전체 · '2026' 등 — PubMed 등록일의 연도
+let year = '';         // '' 전체 · '2026' 등 — 공개일의 연도
+// 공개일 = 출판일과 PubMed 등록일 중 빠른 날(수집이 계산). 등록일만 쓰면 색인이 늦은 옛 논문이 새 논문처럼 보인다
+const pubDay = p => p['공개일'] || p['등록일'] || '';
 let tab = 'list';      // list 논문 목록 · an 분석
 let anDeptAll = false, anPeopleAll = false;
 
@@ -321,7 +324,7 @@ function filtered() {
   const from = $('date-from').value, to = $('date-to').value, dept = $('dept-filter').value;
   const terms = $('search-input').value.toLowerCase().split(/\s+/).filter(Boolean);
   const base = P.filter(p => {
-    const d = p['등록일'] || '';
+    const d = pubDay(p);
     if (year && !d.startsWith(year)) return false;
     if (from && d < from) return false;
     if (to && d > to) return false;
@@ -350,7 +353,7 @@ function filtered() {
   const cmp = (a, b) => {
     const x = key(a), y = key(b);
     const c = typeof x === 'string' ? x.localeCompare(y, 'ko') : x - y;
-    return c * dir || (b['등록일'] || '').localeCompare(a['등록일'] || '') || b['점수'] - a['점수'];
+    return c * dir || pubDay(b).localeCompare(pubDay(a)) || b['점수'] - a['점수'];
   };
   for (const k in views) views[k].sort(cmp);
   return {base, views};
@@ -372,7 +375,7 @@ const AI_RANK = {'높음': 3, '보통': 2, '낮음': 1};
 // IF가 없으면 OpenAlex 값을 2배 해 IF 축척에 대략 맞춘다(정렬용). 2.5배로 하면 STTT(51→127)가 Lancet(IF 109)을 앞질렀다
 const metricNum = p => p['IF'] != null ? p['IF'] : (p['지표'] != null ? p['지표'] * 2 : -1);
 const SORT_KEYS = {
-  date:  p => p['등록일'] || '',
+  date:  p => pubDay(p),
   tier:  p => (TIER_RANK[p['등급']] || 0) * 1000 + Math.max(metricNum(p), 0),
   metric: p => metricNum(p),
   // 한글 진료과 → 영어 그대로인 것 → 진료과 없음 순 (그냥 비교하면 영어가 한글보다 앞에 온다)
@@ -425,6 +428,14 @@ function aiCell(p) {
   return `<span class="ai ${esc(v['가치'])}" title="${esc(v['이유'])}">${esc(v['가치'])}</span>`
     + (v['가치'] !== '낮음' && v['한줄'] ? `<div class="ai-line">${esc(v['한줄'])}</div>` : '');
 }
+// NEW — 최근 이틀 안에 PubMed에 올라왔고, 실제로도 새로 나온(늦게 등록된 옛 논문이 아닌) 논문
+function isNew(p, since) {
+  return !!since && (p['등록일'] || '') >= since && !p['늦은등록'];
+}
+// 출판 뒤 90일 넘게 지나 PubMed에 올라온 논문 — 공개일 아래에 작게 적는다
+function lateTag(p) {
+  return p['늦은등록'] ? `<div class="late" title="출판 ${ymd(p['출판일'])} · PubMed 등록 ${ymd(p['등록일'])} — 색인이 늦게 붙었습니다">늦게 등록 ${ymd(p['등록일']).slice(2)}</div>` : '';
+}
 // 수집일 기준 이틀 안에 PubMed에 올라온 논문
 function newSince() {
   const g = (data?.['생성'] || '').slice(0, 10);
@@ -439,17 +450,17 @@ function render() {
     return;
   }
   const {base, views} = filtered();
-  // 수집 기간 — PubMed 등록일 최소~최대, 연도별로 골라 볼 수 있다
-  const all = (data['논문'] || []).map(p => p['등록일']).filter(Boolean).sort();
+  // 수집 기간 — 공개일 최소~최대, 연도별로 골라 볼 수 있다
+  const all = (data['논문'] || []).map(pubDay).filter(Boolean).sort();
   const years = {};
   for (const d of all) years[d.slice(0, 4)] = (years[d.slice(0, 4)] || 0) + 1;
-  $('period').innerHTML = `수집 기간 <b>${all[0] || '—'} ~ ${all[all.length - 1] || '—'}</b> (PubMed 등록일 · 매일 갱신)
+  $('period').innerHTML = `수집 기간 <b>${all[0] || '—'} ~ ${all[all.length - 1] || '—'}</b> (공개일 기준 · 매일 갱신)
     <span style="margin-left:6px">연도</span>
     <button class="pill${year === '' ? ' on' : ''}" onclick="setYear('')">전체 <span class="n">${all.length.toLocaleString()}</span></button>`
     + Object.keys(years).sort().reverse().map(y =>
       `<button class="pill${year === y ? ' on' : ''}" onclick="setYear('${y}')">${y} <span class="n">${years[y].toLocaleString()}</span></button>`).join('');
   const since = newSince();
-  const fresh = views.cand.filter(p => (p['등록일'] || '') >= since).length;   // 최근 이틀 새 후보
+  const fresh = views.cand.filter(p => isNew(p, since)).length;   // 최근 이틀 새로 나온 후보
   if (tab === 'an') {
     $('result-count').textContent = '';
     renderAnalysis(base);
@@ -477,7 +488,7 @@ function render() {
   const showConcl = view !== 'all';
   $('table').innerHTML = `<table>
     <thead><tr>
-      ${th('date', '등록', '80px', 'PubMed 등록일')}
+      ${th('date', '공개', '84px', '공개일 = 출판일과 PubMed 등록일 중 빠른 날')}
       ${th('tier', '등급', '52px', 'S → A → B, 같은 등급은 IF·피인용 순')}
       ${th('metric', '저널', '150px', 'IF·피인용 순')}
       <th>논문</th>
@@ -495,7 +506,7 @@ function render() {
       const more = (p['우리저자수'] || 0) > 3 ? ` 외 ${p['우리저자수'] - 3}명` : '';
       const types = (p['유형'] || []).filter(t => /Review|Trial|Meta-Analysis|Comment|Letter|Editorial/.test(t));
       return `<tr>
-        <td class="td-date">${since && (p['등록일'] || '') >= since ? '<span class="new">NEW</span><br>' : ''}${ymd(p['등록일'])}</td>
+        <td class="td-date">${isNew(p, since) ? '<span class="new">NEW</span><br>' : ''}${ymd(pubDay(p))}${lateTag(p)}</td>
         <td>${p['등급'] ? `<span class="tier ${p['등급']}">${p['등급']}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
         <td class="journal">${esc(p['약어'] || p['저널'])}<span class="m${p['IF'] != null ? ' if' : ''}" title="${p['IF'] != null ? `JCR IF · 분야 상위 ${p['IF상위']}%` : 'OpenAlex 최근 2년 평균 피인용 (JCR IF 아님)'}">${metricLabel(p)}</span></td>
         <td class="td-title"><a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/" target="_blank" rel="noopener">${esc(p['제목'])}</a>${types.length ? `<span class="types">${types.map(esc).join(' · ')}</span>` : ''}
@@ -709,13 +720,13 @@ function anOpen(which, i, pick) {
     list = row.list.filter(AN_PICK[pick]);
     who = row.dept;
   }
-  list = list.slice().sort((a, b) => (b['등록일'] || '').localeCompare(a['등록일'] || ''));
+  list = list.slice().sort((a, b) => pubDay(b).localeCompare(pubDay(a)));
   $('modal-title').textContent = `${who} · ${AN_LABEL[pick]} ${list.length}편`;
   $('modal-body').innerHTML = `<table>
     <thead><tr><th style="width:84px">등록</th><th style="width:40px">등급</th><th style="width:140px">저널</th><th>논문</th>
       <th style="width:150px">주도 저자</th><th style="width:70px">AI</th></tr></thead>
     <tbody>${list.map(p => `<tr>
-      <td class="td-date">${ymd(p['등록일'])}</td>
+      <td class="td-date">${ymd(pubDay(p))}${lateTag(p)}</td>
       <td>${p['등급'] ? `<span class="tier ${p['등급']}">${p['등급']}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
       <td class="journal">${esc(p['약어'] || p['저널'])}<span class="m${p['IF'] != null ? ' if' : ''}">${metricLabel(p)}</span></td>
       <td class="td-title"><a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/" target="_blank" rel="noopener">${esc(p['제목'])}</a>
@@ -765,10 +776,10 @@ function downloadExcel() {
   if (tab === 'an') return downloadAnalysisExcel();
   const {views} = filtered();
   const NAME = {cand: '보도자료 후보', ai: 'AI 보도가치 높음', join: '최상위 저널 참여', marked: '보도자료 배포', all: '전체'};
-  const rows = [['등록일', '출판일', '등급', 'IF(JCR)', '2년 피인용(OpenAlex)', '저널', '제목', '우리 저자', '교신(추정)', '제1저자', '마지막저자',
+  const rows = [['공개일', 'PubMed 등록일', '출판일', '등급', 'IF(JCR)', '2년 피인용(OpenAlex)', '저널', '제목', '우리 저자', '교신(추정)', '제1저자', '마지막저자',
                  '진료과', '결론', 'AI 보도가치', 'AI 한줄', 'AI 이유', '보도자료', '배포일', 'PMID', 'DOI', '링크']];
   views[view].forEach(p => rows.push([
-    p['등록일'] || '', p['출판일'] || '', p['등급'] || '', p['IF'] ?? '', p['지표'] ?? '', p['저널'] || '', p['제목'] || '',
+    pubDay(p), p['등록일'] || '', p['출판일'] || '', p['등급'] || '', p['IF'] ?? '', p['지표'] ?? '', p['저널'] || '', p['제목'] || '',
     (p['우리저자'] || []).join(', '), (p['교신'] || []).join(', '), p['제1저자'] ? 'Y' : '', p['마지막저자'] ? 'Y' : '',
     (p['진료과'] || []).map(deptKo).join(', '), p['결론'] || '',
     p['AI가치']?.['가치'] || '', p['AI가치']?.['한줄'] || '', p['AI가치']?.['이유'] || '',

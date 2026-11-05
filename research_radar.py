@@ -38,7 +38,8 @@ DAYS      = int(os.environ.get("RESEARCH_DAYS", "10") or 10)
 KEEP_DAYS = int(os.environ.get("RESEARCH_KEEP_DAYS", "0") or 0)
 # 이보다 앞서 PubMed에 등록된 논문은 담지 않는다(2026-11-05). 2024-01-01부터 채웠더니 등록일이 2023-12-29~31인
 # 3편이 딸려 와 연도 버튼에 '2023'이 생겼다
-FROM_DATE = os.environ.get("RESEARCH_FROM", "").strip() or "2024-01-01"
+FROM_DATE = os.environ.get("RESEARCH_FROM", "").strip() or "2024-01-01"     # 공개일 기준
+LATE_DAYS = 90          # 출판 뒤 이만큼 넘게 지나 PubMed에 올라온 논문은 '늦게 등록'으로 표시
 NCBI_KEY  = os.environ.get("NCBI_API_KEY", "").strip()
 OA_KEY    = os.environ.get("OPENALEX_API_KEY", "").strip()
 UA        = {"User-Agent": "amc-research-radar/1.0"}
@@ -398,7 +399,18 @@ def main():
     for a in fresh:
         papers[a["pmid"]] = a
 
-    papers = {k: v for k, v in papers.items() if (v.get("등록일") or "9999") >= FROM_DATE}
+    # 공개일 = 출판일과 PubMed 등록일 중 빠른 날(2026-11-05). 등록일만 보면 2024-12에 나온 NEJM AI 논문이
+    # PubMed 색인이 늦어 2026-10-26 '새 논문'처럼 보였다. 반대로 출판일이 인쇄 호 날짜라 등록일보다 늦은 논문도 많다
+    for v in papers.values():
+        days = [x for x in (v.get("출판일"), v.get("등록일")) if x]
+        v["공개일"] = min(days) if days else ""
+        late = v.get("출판일") and v.get("등록일") and v["출판일"] < v["등록일"] and \
+            (datetime.fromisoformat(v["등록일"]) - datetime.fromisoformat(v["출판일"])).days > LATE_DAYS
+        if late:
+            v["늦은등록"] = True
+        else:
+            v.pop("늦은등록", None)
+    papers = {k: v for k, v in papers.items() if (v.get("공개일") or "9999") >= FROM_DATE}
     # 오래된 것 정리 (등록일 기준) — KEEP_DAYS가 0이면 하지 않는다
     if KEEP_DAYS > 0:
         cut = (NOW - timedelta(days=KEEP_DAYS)).strftime("%Y-%m-%d")
@@ -442,7 +454,7 @@ def main():
         staff_names = old.get("한글이름병원", {})
         status["의료진명단"] = f"실패 ({type(e).__name__}) — 지난 매칭 유지"
 
-    items = sorted(papers.values(), key=lambda p: (p.get("등록일", ""), p["점수"]), reverse=True)
+    items = sorted(papers.values(), key=lambda p: (p.get("공개일", ""), p["점수"]), reverse=True)
     status["후보"] = sum(p["후보"] for p in items)
     OUT.write_text(json.dumps({
         "생성": NOW.strftime("%Y-%m-%d %H:%M"),

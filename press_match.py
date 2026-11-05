@@ -88,9 +88,10 @@ def candidates(rel, papers):
     rd = date.fromisoformat(rel["날짜"])
     out = []
     for p in papers:
-        if not p.get("등록일"):
+        pub = p.get("공개일") or p.get("등록일")      # 색인이 늦은 논문은 공개일이 실제 나온 날
+        if not pub:
             continue
-        gap = (rd - date.fromisoformat(p["등록일"])).days
+        gap = (rd - date.fromisoformat(pub)).days
         if not -PRESS_AFTER <= gap <= PRESS_BEFORE:
             continue
         au = p.get("우리저자") or []
@@ -112,7 +113,7 @@ def prompt_for(rel, cands):
              "", "논문 후보:"]
     for lead_hit, n, gap, p, hit in cands:
         role = "주도" if lead_hit else "공동저자"
-        lines.append(f"- PMID {p['pmid']} | {p.get('약어') or p.get('저널')} | PubMed 등록 {p['등록일']} "
+        lines.append(f"- PMID {p['pmid']} | {p.get('약어') or p.get('저널')} | 공개 {p.get('공개일') or p['등록일']} "
                      f"| 보도자료 의료진 {', '.join(hit)}({role})")
         lines.append(f"  제목: {p['제목']}")
         if p.get("결론"):
@@ -199,7 +200,7 @@ def match_releases(papers, cache, today, status, names=None):
     asked = kept = 0
     new_cache = {}
     if releases is not None:
-        oldest = min((p["등록일"] for p in papers if p.get("등록일")), default=today.isoformat())
+        oldest = min((p.get("공개일") or p["등록일"] for p in papers if p.get("등록일")), default=today.isoformat())
         for rel in releases:
             # 논문 보관 기간보다 오래된 보도자료는 후보가 없어 볼 필요가 없다
             if rel["날짜"] < oldest:
