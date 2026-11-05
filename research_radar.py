@@ -10,7 +10,7 @@
 - 보도자료 표시: 우리가 배포한 보도자료 목록(언론 대시보드 개발본의 press_releases.json)과
   논문을 자동으로 맞춘다(press_match.py). 배포일이 지난 보도자료만 쓴다.
 
-환경변수: RESEARCH_DAYS(기본 10) · RESEARCH_KEEP_DAYS(기본 0 = 지우지 않음) · NCBI_API_KEY · OPENALEX_API_KEY (모두 선택)
+환경변수: RESEARCH_DAYS(기본 10) · RESEARCH_KEEP_DAYS(기본 0 = 지우지 않음) · RESEARCH_FROM(기본 2024-01-01, 이전 등록 논문은 뺌) · NCBI_API_KEY · OPENALEX_API_KEY (모두 선택)
           ANTHROPIC_API_KEY(보도자료 판정) · PRESS_URL(보도자료 목록 주소, 기본은 개발 대시보드)
 """
 import json
@@ -36,6 +36,9 @@ OUT = Path("docs/research.json")
 DAYS      = int(os.environ.get("RESEARCH_DAYS", "10") or 10)
 # 0이면 오래된 논문을 지우지 않는다 — 화면에서 연도별로 보려면 쌓여 있어야 한다(2026-11-04부터)
 KEEP_DAYS = int(os.environ.get("RESEARCH_KEEP_DAYS", "0") or 0)
+# 이보다 앞서 PubMed에 등록된 논문은 담지 않는다(2026-11-05). 2024-01-01부터 채웠더니 등록일이 2023-12-29~31인
+# 3편이 딸려 와 연도 버튼에 '2023'이 생겼다
+FROM_DATE = os.environ.get("RESEARCH_FROM", "").strip() or "2024-01-01"
 NCBI_KEY  = os.environ.get("NCBI_API_KEY", "").strip()
 OA_KEY    = os.environ.get("OPENALEX_API_KEY", "").strip()
 UA        = {"User-Agent": "amc-research-radar/1.0"}
@@ -395,6 +398,7 @@ def main():
     for a in fresh:
         papers[a["pmid"]] = a
 
+    papers = {k: v for k, v in papers.items() if (v.get("등록일") or "9999") >= FROM_DATE}
     # 오래된 것 정리 (등록일 기준) — KEEP_DAYS가 0이면 하지 않는다
     if KEEP_DAYS > 0:
         cut = (NOW - timedelta(days=KEEP_DAYS)).strftime("%Y-%m-%d")
@@ -447,7 +451,7 @@ def main():
                  "S_IF": TIER_S_IF, "A_IF": TIER_A_IF, "B_IF": TIER_B_IF,
                  "JCR저널수": len(jif), "JCR연도": sorted({r["연도"] for r in jif.values()}),
                  "S저널": sorted(TOP_S), "A저널": sorted(TOP_A), "A접두어": [x.strip() for x in TOP_A_PREFIX],
-                 "보관일수": KEEP_DAYS},
+                 "보관일수": KEEP_DAYS, "시작일": FROM_DATE},
         "상태": status,
         "건수": len(items),
         "논문": items,
