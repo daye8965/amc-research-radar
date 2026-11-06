@@ -28,6 +28,7 @@ from press_match import match_releases
 from value_judge import eligible as value_eligible, judge_value
 from staff_match import load_staff, match_staff
 from dept_ko import DEPT_KO
+import newsroom_if
 
 KST = timezone(timedelta(hours=9))
 NOW = datetime.now(KST)
@@ -421,12 +422,32 @@ def main():
     jcache = {k: v for k, v in jcache.items() if k in set(all_issn)}
 
     jif = load_jif()
+    # 뉴스룸 보도자료에 적힌 IF — JCR 목록(S2Journal 인쇄본)에 없는 저널을 채운다(newsroom_if.py)
+    try:
+        ndb, nnew = newsroom_if.update(log)
+    except Exception as e:
+        ndb, nnew = newsroom_if.load(), 0
+        log("뉴스룸 IF 실패:", type(e).__name__, e)
+    ntab = newsroom_if.table(ndb)
+    n_used = set()
     for p in papers.values():
         m = journal_metric(p, jcache)
         j = jif_of(p, jif)
+        src = "JCR" if j else ""
+        if not j:
+            nr = newsroom_if.lookup(p, ntab)
+            if nr:
+                j = {"IF": nr["IF"], "상위": None, "날짜": nr["날짜"], "cntId": nr["cntId"]}
+                src = "뉴스룸"
+                n_used.add(p["저널"])
         p["지표"] = m["2y"] if m else None
+        p.pop("IF출처", None)
+        p.pop("IF근거", None)
         if j:
             p["IF"], p["IF상위"] = j["IF"], j["상위"]
+            p["IF출처"] = src
+            if src == "뉴스룸":
+                p["IF근거"] = f"{j['날짜']}|{j['cntId']}"
         else:
             p.pop("IF", None)
             p.pop("IF상위", None)
@@ -454,6 +475,7 @@ def main():
         staff_names = old.get("한글이름병원", {})
         status["의료진명단"] = f"실패 ({type(e).__name__}) — 지난 매칭 유지"
 
+    status["뉴스룸IF"] = f"보도자료 {len(ndb.get('보도자료', {}))}건(새로 {nnew}) · 저널 {len(ntab)}개 · 논문 저널에 쓰임 {len(n_used)}개"
     items = sorted(papers.values(), key=lambda p: (p.get("공개일", ""), p["점수"]), reverse=True)
     status["후보"] = sum(p["후보"] for p in items)
     OUT.write_text(json.dumps({
@@ -461,7 +483,7 @@ def main():
         # 화면의 '등급 기준' 설명이 이 값을 그대로 읽는다 — 기준을 바꾸면 설명도 함께 바뀐다
         "기준": {"S문턱": TIER_S_CITED, "A문턱": TIER_A_CITED, "B문턱": TIER_B_CITED,
                  "S_IF": TIER_S_IF, "A_IF": TIER_A_IF, "B_IF": TIER_B_IF,
-                 "JCR저널수": len(jif), "JCR연도": sorted({r["연도"] for r in jif.values()}),
+                 "JCR저널수": len(jif), "뉴스룸저널수": len(n_used), "JCR연도": sorted({r["연도"] for r in jif.values()}),
                  "S저널": sorted(TOP_S), "A저널": sorted(TOP_A), "A접두어": [x.strip() for x in TOP_A_PREFIX],
                  "보관일수": KEEP_DAYS, "시작일": FROM_DATE},
         "상태": status,
