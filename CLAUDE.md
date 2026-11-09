@@ -27,7 +27,7 @@
 | `docs/journal_if.json` | 저널별 JCR IF·분야 상위%·사분위. 지금은 2025년판 **분야 상위 1% 저널 187개**만 |
 | `docs/index.html` | 페이지 본체 (단일 파일, `research.json`을 읽어 렌더링). 외부 의존은 `xlsx-js-style`(엑셀) 하나 |
 | `docs/research.json` | 수집 결과와 보도자료 판정(`보도자료판정`). **사람이 직접 편집하지 말 것** |
-| `.github/workflows/research.yml` | 매일 1회 수집·커밋. 수동 실행 때 `days`로 다시 훑을 기간을 정합니다 |
+| `.github/workflows/research.yml` | 매일 수집·커밋. 예약이 둘(KST 02:40 본 실행 · 04:10 예비)이고 GitHub가 2~4시간 늦게 돌립니다 — 예약을 통째로 건너뛰는 날이 있어(2026-11-10) 예비를 뒀습니다. 둘 다 돌면 뒤엣것은 대개 변경 없이 끝납니다. 수동 실행 때 `days`로 다시 훑을 기간을 정합니다 |
 
 ## 수집 (`research_radar.py`)
 
