@@ -40,7 +40,7 @@ main{padding:20px 32px;max-width:1320px;margin:0 auto}
 .notice summary{cursor:pointer;font-weight:600}
 .card-help{margin:4px 0 2px 18px;padding:0}
 .card-help li{margin:1px 0}
-.notice table{margin:6px 0;border-collapse:collapse;font-size:12px;background:#fff}
+.notice table{margin:6px 0;border-collapse:collapse;font-size:12px;background:#fff;min-width:0;width:auto}
 .notice td,.notice th{border:1px solid #f0e2a8;padding:3px 8px;text-align:left}
 
 .views{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
@@ -193,6 +193,37 @@ td{padding:10px 8px;vertical-align:top}
       배포일 전 6개월 안에 PubMed에 올라온 논문을 후보로 추립니다. 그중 어느 논문인지는
       <b>AI(Claude)가 보도자료 제목과 논문 제목·결론을 비교해</b> 고릅니다 — 행사·수상·출간 같은 보도자료는 붙지 않습니다.
       <b>배포일이 지난 보도자료만</b> 맞춥니다. 표시에 마우스를 올리면 AI가 고른 근거가 보입니다.
+    </details>
+    <details id="ai-guide">
+      <summary>🤖 AI 보도가치 기준</summary>
+      <p><b>무엇을 보나요?</b> AI(Claude)가 논문마다 <b>"우리 팀이 이 논문으로 보도자료를 낼 만한가"</b>를 높음·보통·낮음으로 매깁니다.
+        저널 등급(S·A·B)이 '좋은 저널인가'만 본다면, 이 칸은 <b>기사 소재로서의 힘</b>을 따로 봅니다.
+        실제로 팀이 보도자료를 낸 논문 중 절반 넘게는 등급 후보 밖(Sci Rep·BMC Geriatr 등)이었습니다.</p>
+      <p><b>대상</b> — 우리 의료진이 <b>제1·교신·마지막 저자</b>인 <b>연구 논문</b>만 매깁니다. 중간 공동저자 논문, 리뷰·증례·편지 등은 칸이 비어 있습니다.<br>
+        <b>AI가 보는 정보</b> — 논문 제목 · 초록의 결론 · 저널과 등급(IF) · 우리 역할(제1·교신·마지막) · 저자 수. 본문은 보지 않습니다.</p>
+      <table>
+        <tr><th>판정</th><th>기준</th></tr>
+        <tr><td><b style="color:#6a3fb5">높음</b></td><td>아래 특징 중 하나가 <b>분명하고</b>, 결과를 <b>일반인에게 한 문장으로 설명할 수 있는</b> 논문 (전체의 15% 안팎)
+          <ul style="margin:4px 0 0;padding-left:18px">
+            <li><b>새 진단·검사 기술</b> — 혈액·소변·내시경·영상·AI 진단, 바이오마커로 정확도를 크게 높인 것</li>
+            <li><b>국내·세계 첫 기준·가이드라인·공식</b> — 희귀 종양 치료 가이드라인, 수술 기준 공식 등</li>
+            <li><b>난치·희귀질환의 새 치료 가능성</b> — 오가노이드·줄기세포·면역치료·약물 재창출 (기초연구라도 치료로 이어지는 메시지가 분명하면)</li>
+            <li><b>한국인·아시아인 환자 데이터</b>로 발생률·위험 요인·장기 성적을 밝힌 것</li>
+            <li>치료를 <b>더 쉽게·덜 힘들게</b> 바꾸는 것 — 치료 횟수 줄이기, 약을 끊어도 되는지, 수술 대신 내시경 등</li>
+            <li><b>최상위 학술지(S 등급)</b> 게재, A 등급 저널의 임상 결과</li>
+          </ul></td></tr>
+        <tr><td>보통</td><td>의미는 있지만 메시지가 전문적이거나 결과가 애매한 것 — 단순 술기 비교, 예후 인자 나열, 소규모 후향 분석</td></tr>
+        <tr><td style="color:var(--muted)">낮음</td><td>증례 보고, 리뷰·해설, 방법론·통계 기법, 환자와 연결이 먼 기초 기전, 우리 병원 역할이 작아 보이는 것</td></tr>
+      </table>
+      <p><b>예외 규칙</b> — <b>S 등급 저널</b>(NEJM·Lancet·JAMA·Nature 등)에 우리가 주도한 연구는 AI 판단과 상관없이 <b>항상 높음</b>입니다.
+        실제 보도자료가 "세계 최고 권위 학술지 게재" 자체를 소재로 쓰기 때문입니다.<br>
+        <b>팀 예시로 학습</b> — AI에게 기준만 주지 않고, <b>팀이 실제로 보도자료를 낸 논문 최근 40편</b>(보도자료 제목 ↔ 논문 제목)을 함께 보여 줍니다.
+        보도자료가 쌓일수록 예시도 저절로 늘어납니다.<br>
+        <b>표시</b> — 판정 아래 보라색 글씨는 AI가 기사 제목처럼 쓴 한 줄 요약이고, 판정에 <b>마우스를 올리면 판단 이유</b>가 보입니다.</p>
+      <p><b>얼마나 믿을 수 있나요?</b> 실제 보도자료 논문을 예시와 맞힐 논문으로 나눠 재 보니, '높음'으로 맞힌 것은 <b>4~5편 중 1편</b> 수준이었습니다.
+        팀의 선택은 교수 요청·시기처럼 초록에 없는 사정으로도 갈리기 때문입니다.
+        대신 <b>'낮음' 거르기는 믿을 만합니다</b> — 일반 논문의 43%를 '낮음'으로 거르면서 실제 보도자료 논문은 9%만 빠졌습니다.
+        '높음'은 <b>먼저 읽어 볼 후보</b>로, '낮음'은 <b>건너뛰어도 되는 논문</b>으로 쓰세요.</p>
     </details>
     <details id="tier-guide">
       <summary>S·A·B 등급 기준</summary>
@@ -504,7 +535,7 @@ function render() {
       <th>논문</th>
       <th style="width:170px">우리 저자</th>
       ${th('dept', '진료과', '100px')}
-      ${th('ai', 'AI 보도가치', '150px', 'Claude가 일반 언론 보도 소재로서의 힘을 판단 (우리가 주도한 연구 논문만)')}
+      ${th('ai', 'AI 보도가치', '150px', 'Claude가 우리 팀 보도자료 소재로서의 힘을 판단 — 새 진단기술·첫 기준·난치병 치료·한국인 데이터·치료 부담 감소면 높음, S 등급은 항상 높음 (기준은 위 「🤖 AI 보도가치 기준」)')}
       <th style="width:72px">PMID</th>
       ${th('pr', '보도자료', '80px', '배포일 순')}
     </tr></thead>
