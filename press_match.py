@@ -184,6 +184,27 @@ def korean_names(papers, releases):
     return out
 
 
+MANUAL = "press_manual.csv"
+
+
+def load_manual():
+    """보도자료 ↔ 논문을 사람이 직접 정한 목록. AI 판정보다 항상 우선한다.
+    배포일 + 보도자료 제목 앞부분(포함되면 맞음)으로 보도자료를 찾고, doi의 논문을 붙인다.
+    doi 논문이 아직 PubMed에 없으면 **아무 논문에도 붙이지 않는다** — 올라오는 날 자동으로 붙는다.
+    doi를 비우면 그 보도자료는 논문에 붙이지 않는다(논문 보도자료가 아닌데 AI가 붙인 경우)."""
+    import csv
+    try:
+        with open(MANUAL, encoding="utf-8-sig", newline="") as f:
+            return [r for r in csv.DictReader(f) if r.get("배포일") and r.get("보도자료제목")]
+    except FileNotFoundError:
+        return []
+
+
+def manual_for(key, rows):
+    day, title = key.split("|", 1)
+    return next((r for r in rows if r["배포일"].strip() == day and r["보도자료제목"].strip() in title), None)
+
+
 def match_releases(papers, cache, today, status, names=None):
     """papers(list) 각각에 p['pr']을 붙이고, 판정 캐시(cache, dict)를 고쳐 돌려준다.
     names(dict)를 주면 주도 저자 영문 → 한글 이름을 채운다(분석 탭)."""
@@ -239,15 +260,32 @@ def match_releases(papers, cache, today, status, names=None):
     else:
         new_cache = dict(cache)
 
+    # 사람이 정한 연결(press_manual.csv) — AI가 고른 논문 대신 doi의 논문. 후보가 없어 캐시에 없는 보도자료도 여기서 붙는다
+    manual = load_manual()
+    by_doi = {(p.get("doi") or "").lower(): p for p in papers if p.get("doi")}
+    rel_by_key = {f"{r['날짜']}|{r['제목']}": r for r in (releases or [])}
+    for key, rel in rel_by_key.items():
+        if key not in new_cache and manual_for(key, manual):
+            new_cache[key] = {"pmid": "", "후보": [], "의료진": rel["의료진"], "진료과": rel["진료과"]}
+    n_manual = 0
+
     for p in papers:
         p.pop("pr", None)
     matched = 0
     for key, v in sorted(new_cache.items()):          # 날짜순 — 같은 논문이면 나중 보도자료가 남는다
-        p = by_pmid.get(v.get("pmid") or "")
+        m = manual_for(key, manual)
+        if m:
+            n_manual += 1
+            doi = (m.get("doi") or "").strip().lower()
+            p = by_doi.get(doi) if doi else None
+        else:
+            p = by_pmid.get(v.get("pmid") or "")
         if not p:
             continue
         day, title = key.split("|", 1)
         p["pr"] = {"상태": "배포", "배포일": day, "보도자료": title}
+        if m:
+            p["pr"]["수동"] = True
         # 보도자료에 이름이 나온 의료진 — 보통 제1저자와 교신(마지막) 저자다. 분석 탭은 이 사람들을 모두 실적으로 센다.
         # 영문은 논문의 우리 저자 중 같은 사람으로 보이는 이름(없으면 빈 칸). 진료과는 research_radar.py가 채운다
         p["pr"]["의료진"] = [{"한글": k, "영문": next((a for a in p.get("우리저자", []) if same_person(k, a)), "")}
@@ -259,7 +297,7 @@ def match_releases(papers, cache, today, status, names=None):
                 d["시트진료과"] = t
         matched += 1
 
-    status["보도자료"] = (f"맞춘 논문 {matched}편 · 새로 물음 {asked} · 지난 판정 {kept}"
+    status["보도자료"] = (f"맞춘 논문 {matched}편 · 새로 물음 {asked} · 지난 판정 {kept} · 직접 지정 {n_manual}건"
                        + (f" · 오류 {judge.errors}" if judge.errors else "")
                        + ("" if judge.client else " · ANTHROPIC_API_KEY 없음(새 판정 안 함)")
                        + (f" · 중단: {judge.fatal}" if judge.fatal else ""))
