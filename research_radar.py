@@ -27,7 +27,7 @@ import requests
 from press_match import match_releases
 from value_judge import eligible as value_eligible, judge_value
 from staff_match import load_staff, match_staff
-from dept_ko import DEPT_KO
+from dept_ko import DEPT_KO, dept_ko
 import newsroom_if
 
 KST = timezone(timedelta(hours=9))
@@ -467,6 +467,7 @@ def main():
     value_cache = judge_value(list(papers.values()), value_cache, status)
 
     # 병원 홈페이지 의료진 명단으로 한글 이름·진료과 (일주일에 한 번 새로 읽음, 실패하면 지난 명단)
+    staff = []
     try:
         staff, staff_msg = load_staff(log)
         staff_names, why = match_staff(list(papers.values()), staff)
@@ -476,6 +477,28 @@ def main():
         status["의료진명단"] = f"실패 ({type(e).__name__}) — 지난 매칭 유지"
 
     status["뉴스룸IF"] = f"보도자료 {len(ndb.get('보도자료', {}))}건(새로 {nnew}) · 저널 {len(ntab)}개 · 논문 저널에 쓰임 {len(n_used)}개"
+    # 보도자료 의료진의 진료과 — 논문 소속(우리말로 바뀌면) → 홈페이지 명단(영문 매칭) → 홈페이지 명단(한글 이름이 한 과에만 있을 때)
+    by_ko = {}
+    for s_ in staff:
+        by_ko.setdefault(s_["이름"], set()).add(s_["진료과"][0])
+    for p in papers.values():
+        for d in ((p.get("pr") or {}).get("의료진") or []):
+            dept = ""
+            if d["영문"]:
+                a = next((a for a in p.get("주도저자", []) if a["이름"] == d["영문"]), None)
+                ko = dept_ko(a.get("진료과", "")) if a else ""
+                if re.search("[가-힣]", ko or ""):
+                    dept = ko
+                if not dept:
+                    dept = (staff_names.get(d["영문"]) or {}).get("진료과", "")
+            if not dept and len(by_ko.get(d["한글"], ())) == 1:
+                dept = next(iter(by_ko[d["한글"]]))
+            # 마지막으로 시트에 적힌 진료과 — 우리말일 때만(CV·GI 같은 약어는 쓰지 않는다). 융합의학과처럼 홈페이지 명단에 없는 과
+            t = d.pop("시트진료과", "")
+            if not dept and re.fullmatch(r"[가-힣·ㆍ]+(과|센터|교실)", t):
+                dept = t
+            d["진료과"] = dept
+
     items = sorted(papers.values(), key=lambda p: (p.get("공개일", ""), p["점수"]), reverse=True)
     status["후보"] = sum(p["후보"] for p in items)
     OUT.write_text(json.dumps({

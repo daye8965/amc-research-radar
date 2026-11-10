@@ -212,6 +212,8 @@ def match_releases(papers, cache, today, status, names=None):
             cset = sorted(c[3]["pmid"] for c in cands)
             prev = cache.get(key)
             if prev and prev.get("후보") == cset and prev.get("판") == JUDGE_VER:
+                prev["의료진"] = rel["의료진"]          # 보도자료에 적힌 의료진 — 분석 탭이 실적으로 센다
+                prev["진료과"] = rel["진료과"]
                 new_cache[key] = prev                 # 같은 후보로 이미 물었다
                 kept += 1
                 continue
@@ -232,7 +234,8 @@ def match_releases(papers, cache, today, status, names=None):
             # 확신이 '높음'일 때만 붙인다 — 2026-11-04 첫 실행에서 30건 중 5건이 수술 성공·건수 달성
             # 보도자료에 같은 분야 다른 논문을 붙인 것이었다
             new_cache[key] = {"pmid": pick if sure == "높음" else "", "후보": cset, "확신": sure,
-                              "고른것": pick, "근거": ans.get("근거", "")[:200], "모델": MODEL, "판": JUDGE_VER}
+                              "고른것": pick, "근거": ans.get("근거", "")[:200], "모델": MODEL, "판": JUDGE_VER,
+                              "의료진": rel["의료진"], "진료과": rel["진료과"]}
     else:
         new_cache = dict(cache)
 
@@ -245,6 +248,15 @@ def match_releases(papers, cache, today, status, names=None):
             continue
         day, title = key.split("|", 1)
         p["pr"] = {"상태": "배포", "배포일": day, "보도자료": title}
+        # 보도자료에 이름이 나온 의료진 — 보통 제1저자와 교신(마지막) 저자다. 분석 탭은 이 사람들을 모두 실적으로 센다.
+        # 영문은 논문의 우리 저자 중 같은 사람으로 보이는 이름(없으면 빈 칸). 진료과는 research_radar.py가 채운다
+        p["pr"]["의료진"] = [{"한글": k, "영문": next((a for a in p.get("우리저자", []) if same_person(k, a)), "")}
+                            for k in v.get("의료진", [])]
+        # 시트의 진료과 칸 — 의료진과 같은 순서로 띄어 적는다('소화기내과 병리과'). 약어(CV·GI)도 섞여 있다
+        sheet = (v.get("진료과") or "").split()
+        if len(sheet) == len(p["pr"]["의료진"]):
+            for d, t in zip(p["pr"]["의료진"], sheet):
+                d["시트진료과"] = t
         matched += 1
 
     status["보도자료"] = (f"맞춘 논문 {matched}편 · 새로 물음 {asked} · 지난 판정 {kept}"

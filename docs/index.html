@@ -594,15 +594,36 @@ function koName(en, deptEn = '') {
 }
 function pct(a, b) { return b ? (a / b * 100).toFixed(1) + '%' : '—'; }
 
+// 보도자료 실적을 받는 사람 — 보도자료에 이름이 나온 의료진(보통 제1저자와 교신·마지막 저자) 모두.
+// 논문에서 영문 이름을 찾은 사람만 센다. 의료진 정보가 없는 옛 판정이면 예전처럼 그 논문의 주도 저자 전원
+const anKey = en => (en || '').toLowerCase().replace(/[^a-z]/g, '');
+function prPeople(p) {
+  const L = (p.pr?.['의료진'] || []).filter(d => d['영문']);
+  return L.length ? L : (p['주도저자'] || []).map(a => ({영문: a['이름'], 한글: '', 진료과: authorDept(a)}));
+}
+// 보도자료 실적을 받는 진료과 — 위 사람들의 과를 모두(같은 과는 한 번). 하나도 모르면 대표 진료과
+function prDeptsOf(p) {
+  const s = new Set((p.pr?.['의료진'] || []).map(d => d['진료과']).filter(Boolean));
+  return s.size ? [...s] : [leadDept(p)];
+}
+
 function analysisData(base) {
   const lead = base.filter(p => p['연구'] && isLead(p));
   // 진료과별 — 숫자와 함께 그 논문 목록(list)을 들고 다닌다. 숫자·막대를 누르면 이 목록에서 골라 보여 준다
   const D = new Map();
   for (const p of lead) {
     const k = leadDept(p);
-    const r = D.get(k) || {dept: k, n: 0, sa: 0, hi: 0, pr: 0, list: []};
-    r.n++; r.sa += AN_PICK.sa(p); r.hi += AN_PICK.hi(p); r.pr += AN_PICK.pr(p);
+    const r = D.get(k) || {dept: k, n: 0, sa: 0, hi: 0, pr: 0, list: [], prList: []};
+    r.n++; r.sa += AN_PICK.sa(p); r.hi += AN_PICK.hi(p);
     r.list.push(p);
+    D.set(k, r);
+  }
+  // 보도자료는 대표 진료과 하나가 아니라 보도자료에 이름이 나온 의료진의 과마다 센다 —
+  // 심장내과·병리과 공동 연구면 두 과 모두 1건. 그래서 과별 합이 보도자료 편수보다 클 수 있다
+  const prPapers = base.filter(p => p.pr);
+  for (const p of prPapers) for (const k of prDeptsOf(p)) {
+    const r = D.get(k) || {dept: k, n: 0, sa: 0, hi: 0, pr: 0, list: [], prList: []};
+    r.pr++; r.prList.push(p);
     D.set(k, r);
   }
   const depts = [...D.values()].map(r => ({...r, rate: r.n ? r.pr / r.n : 0}));
@@ -613,13 +634,25 @@ function analysisData(base) {
     // 대소문자·붙임표·띄어쓰기만 다른 표기는 같은 사람으로 묶는다(BumSik Hong = Bumsik Hong, Nam-Kug = Namkug)
     const k = a['이름'].toLowerCase().replace(/[^a-z]/g, '');
     const r = M.get(k) || {key: k, en: a['이름'], ko: koName(a['이름'], a['진료과']), depts: {}, n: 0, first: 0, corr: 0, last: 0,
-                           sa: 0, hi: 0, pr: 0, list: [], roles: new Map()};
+                           sa: 0, hi: 0, pr: 0, list: [], prList: [], roles: new Map()};
     if (!r.ko) r.ko = koName(a['이름'], a['진료과']);
     const roles = a['역할'] || [];
     r.n++; r.first += roles.includes('제1'); r.corr += roles.includes('교신'); r.last += roles.includes('마지막');
-    r.sa += AN_PICK.sa(p); r.hi += AN_PICK.hi(p); r.pr += AN_PICK.pr(p);
+    r.sa += AN_PICK.sa(p); r.hi += AN_PICK.hi(p);
     r.list.push(p); r.roles.set(p.pmid, roles);
     { const d = authorDept(a); if (d) r.depts[d] = (r.depts[d] || 0) + 1; }
+    M.set(k, r);
+  }
+  // 보도자료 실적 — 보도자료에 이름이 나온 의료진 모두에게. 주도 저자가 아닌 사람(중간 공동저자)도 줄을 만들어 준다
+  for (const p of prPapers) for (const d of prPeople(p)) {
+    const k = anKey(d['영문']);
+    if (!k) continue;
+    const r = M.get(k) || {key: k, en: d['영문'], ko: '', depts: {}, n: 0, first: 0, corr: 0, last: 0,
+                           sa: 0, hi: 0, pr: 0, list: [], prList: [], roles: new Map()};
+    if (r.prList.includes(p)) continue;
+    r.pr++; r.prList.push(p);
+    if (!r.ko && d['한글']) r.ko = d['한글'];
+    if (d['진료과'] && !Object.keys(r.depts).length) r.depts[d['진료과']] = 1;
     M.set(k, r);
   }
   // 사람이 직접 적은 한글 이름(names_manual.csv)이 자동 매칭보다 우선. 진료과를 적었으면 그 과일 때만
@@ -630,7 +663,7 @@ function analysisData(base) {
     const ko = m && (!m['진료과'] || m['진료과'] === dept) ? m['한글'] : r.ko;
     return {...r, ko, name: ko || r.en, dept};
   });
-  return {lead, depts, people};
+  return {lead, depts, people, prN: prPapers.length};
 }
 
 // 숫자를 눌렀을 때 고르는 기준 — 표의 각 열과 같은 이름
@@ -678,9 +711,9 @@ function barCell(n, max, color) {
 }
 
 function renderAnalysis(base) {
-  const {lead, depts, people} = analysisData(base);
+  const {lead, depts, people, prN} = analysisData(base);
   const total = (k) => depts.reduce((s, d) => s + d[k], 0);
-  const prTotal = total('pr');
+  const prTotal = prN;          // 보도자료 편수 — 과별 합(total('pr'))은 공동 연구를 과마다 세서 더 크다
   const maxN = Math.max(1, ...depts.map(d => d.n));
   const maxPr = Math.max(1, ...depts.map(d => d.pr));
   const dSorted = anSort(depts, anDeptSort);
@@ -693,15 +726,16 @@ function renderAnalysis(base) {
   $('an-panel').innerHTML = `
     <div class="an-grid">
       <div class="an-card"><div class="label">우리가 주도한 연구 논문</div><div class="value" style="color:var(--accent)">${lead.length.toLocaleString()}</div></div>
-      <div class="an-card"><div class="label">진료과</div><div class="value" style="color:var(--accent)">${depts.length}</div></div>
+      <div class="an-card"><div class="label">진료과</div><div class="value" style="color:var(--accent)">${depts.filter(d => d.n).length}</div></div>
       <div class="an-card"><div class="label">S·A 등급</div><div class="value" style="color:var(--accent)">${total('sa').toLocaleString()}</div></div>
       <div class="an-card"><div class="label">보도자료 배포</div><div class="value" style="color:#1a7a3c">${prTotal}</div></div>
-      <div class="an-card"><div class="label">주도 연구자</div><div class="value" style="color:var(--accent)">${people.length.toLocaleString()}</div></div>
+      <div class="an-card"><div class="label">주도 연구자</div><div class="value" style="color:var(--accent)">${people.filter(r => r.n).length.toLocaleString()}</div></div>
     </div>
 
     <div class="an-sec">
       <h2>진료과별 논문과 보도자료</h2>
       <div class="desc">우리 의료진이 제1·교신·마지막 저자인 연구 논문을 <b>대표 진료과</b>(교신 → 마지막 → 제1 저자의 소속 순)로 묶었습니다.
+        <b>보도자료 배포는 보도자료에 이름이 나온 의료진의 과마다</b> 셉니다(공동 연구면 여러 과에 1건씩).
         논문이 많은데 배포가 없는 과는 아직 찾지 못한 소재가 있을 수 있습니다. <b>열 제목을 누르면 정렬, 숫자·막대를 누르면 논문 목록</b>이 뜹니다.</div>
       <div class="table-wrap"><table>
         <thead><tr>${anTh('d', 'dept', '진료과')}${anTh('d', 'n', '주도 논문')}${anTh('d', 'sa', 'S·A', 'num')}${anTh('d', 'hi', 'AI 높음', 'num')}${anTh('d', 'pr', '보도자료 배포')}${anTh('d', 'rate', '배포율', 'num')}</tr></thead>
@@ -718,18 +752,21 @@ function renderAnalysis(base) {
 
     <div class="an-sec">
       <h2>보도자료 배포의 진료과별 분포</h2>
-      <div class="desc">보도자료로 나간 논문 ${prTotal}편이 어느 과에서 나왔는지입니다. 막대를 누르면 그 보도자료 논문이 뜹니다.</div>
+      <div class="desc">보도자료로 나간 논문 ${prTotal}편을 <b>보도자료에 이름이 나온 의료진(보통 제1저자·교신 저자)의 과마다</b> 셌습니다.
+        두 과가 함께 낸 보도자료는 두 과에 1건씩 잡히므로 막대를 더하면 ${prTotal}편보다 많습니다. 비율은 보도자료 ${prTotal}편 중 그 과가 들어간 비율입니다.
+        막대를 누르면 그 보도자료 논문이 뜹니다.</div>
       ${prDepts.length ? `<table><tbody>${prDepts.map((d, i) => `<tr>
           <td style="width:180px">${anClick('pr', i, 'pr', esc(d.dept), d.pr)}</td>
           <td>${anClick('pr', i, 'pr', barCell(d.pr, maxPr, '#1a7a3c'), d.pr)}</td>
-          <td class="num" style="width:120px;color:var(--muted)">${pct(d.pr, prTotal)} · 논문 ${d.n}편 중</td></tr>`).join('')}</tbody></table>`
+          <td class="num" style="width:150px;color:var(--muted)">${pct(d.pr, prTotal)}${d.n ? ` · 논문 ${d.n}편 중` : ''}</td></tr>`).join('')}</tbody></table>`
         : '<div class="empty" style="padding:20px">이 기간에 보도자료로 나간 논문이 없습니다.</div>'}
     </div>
 
     <div class="an-sec">
       <h2>주도 연구자 (제1·교신·마지막 저자)</h2>
       <div class="desc">논문 한 편에서 여러 역할을 맡으면 역할마다 셉니다(예: 제1저자이자 교신). 이름은 PubMed 영문 이름이고,
-        <b>보도자료 의료진 명단과 맞는 사람만</b> 한글 이름을 붙였습니다. 교신은 소속 칸에 이메일을 적은 저자로 추정한 값이고,
+        <b>보도자료 의료진 명단과 맞는 사람만</b> 한글 이름을 붙였습니다.
+        <b>보도자료</b> 열은 보도자료에 이름이 나온 사람 모두에게 1건씩 줍니다 — 중간 공동저자로 들어갔어도 보도자료에 나왔으면 실적입니다. 교신은 소속 칸에 이메일을 적은 저자로 추정한 값이고,
         같은 영문 이름의 다른 사람은 합쳐질 수 있습니다. 열 제목을 누르면 정렬, 이름·숫자를 누르면 논문 목록이 뜹니다.</div>
       <div class="table-wrap"><table>
         <thead><tr>${anTh('p', 'name', '연구자')}${anTh('p', 'dept', '진료과')}${anTh('p', 'n', '주도 논문', 'num')}${anTh('p', 'first', '제1저자', 'num')}${anTh('p', 'corr', '교신', 'num')}${anTh('p', 'last', '마지막', 'num')}${anTh('p', 'sa', 'S·A', 'num')}${anTh('p', 'hi', 'AI 높음', 'num')}${anTh('p', 'pr', '보도자료', 'num')}</tr></thead>
@@ -755,10 +792,11 @@ function anOpen(which, i, pick) {
   let list, who;
   if (which === 'p') {
     const role = {first: '제1', corr: '교신', last: '마지막'}[pick];
-    list = row.list.filter(p => role ? (row.roles.get(p.pmid) || []).includes(role) : AN_PICK[pick](p));
+    list = pick === 'pr' ? row.prList
+      : row.list.filter(p => role ? (row.roles.get(p.pmid) || []).includes(role) : AN_PICK[pick](p));
     who = row.ko ? `${row.ko} (${row.en})` : row.en;
   } else {
-    list = row.list.filter(AN_PICK[pick]);
+    list = pick === 'pr' ? row.prList : row.list.filter(AN_PICK[pick]);
     who = row.dept;
   }
   list = list.slice().sort((a, b) => pubDay(b).localeCompare(pubDay(a)));
