@@ -18,6 +18,8 @@
 | `value_eval.py` | AI 보도가치가 실제 보도자료 논문을 얼마나 맞히는지 교차 측정 (수동 워크플로 `value-eval.yml`, 커밋 안 함) |
 | `name_match.py` | 한글 이름 → 영문 표기 후보. `김남국` ↔ `Nam-Kug Kim` |
 | `jcr_import.py` | S2Journal JCR 화면을 PDF로 저장한 파일에서 IF를 뽑아 `docs/journal_if.json`에 합침 (로컬에서 손으로 돌림) |
+| `sheet_if.py` | 공유 구글 시트(S2Journal JCR 전체)에서 IF를 읽음 — **IF의 주 출처** (아래 '공유 구글 시트 IF') |
+| `data/sheet_if_used.json` | 시트 IF 중 우리 논문 저널에 쓴 것만(시트를 못 읽은 날의 대비) |
 | `newsroom_if.py` | 우리 뉴스룸 보도자료에 적힌 `(저널명, 피인용지수 10.1)`을 모아 JCR 목록에 없는 저널의 IF를 채움 (아래 '뉴스룸 IF') |
 | `data/newsroom_if.json` | 뉴스룸 보도자료별로 뽑은 저널·IF 캐시. 읽은 보도자료는 다시 안 읽음 |
 | `staff_match.py` | 병원 홈페이지 의료진 명단으로 저자 한글 이름·진료과 찾기 (아래 '병원 홈페이지 의료진 명단') |
@@ -64,6 +66,28 @@
 - 정렬 점수에는 IF를 2.5로 나눠 OpenAlex 축척에 대략 맞춰 씁니다(NEJM 85 → 34 ≈ OpenAlex 33).
 - 화면은 `IF 109.0`(파란 굵은 글씨, JCR) / `피인용 21.6`(OpenAlex)으로 **구분해 적습니다.** 엑셀도 두 열로 나눕니다.
 - JCR은 1년에 한 번(보통 6월) 나옵니다. **새 판이 나오면 PDF를 다시 넣으세요.**
+
+### 공유 구글 시트 IF (`sheet_if.py`, 2026-11-16) — **지금 IF의 주 출처**
+
+사용자가 S2Journal JCR 전체를 구글 시트 「저널 IF 공유 데이터 | S2Journal」(시트 ID
+`1_o1z93ONKxL3nWzSMmz9jAmv6FfKp6T-SbOMzWIi2mo`, '링크가 있는 모든 사용자 · 뷰어')로 정리했습니다.
+`/export?format=csv&gid=0`으로 **키 없이** 매일 새로 읽습니다(약 5MB, 22,702개 저널). `JIF_SHEET_URL`로 바꿀 수 있습니다.
+
+- 순서: **시트 → S2Journal 인쇄본 PDF(`journal_if.json`) → 뉴스룸 보도자료 → OpenAlex.**
+- 맞추기는 **ISSN 먼저**(시트는 ISSN 한 칸, 논문은 인쇄·전자·연결 ISSN을 다 가짐), 없으면 저널명 정규화
+  (`newsroom_if.norm_title`). 같은 ISSN이 여러 해면 가장 최근 연도.
+- 열: `Journal` · `Year (S2Journal label)` · `ISSN` · `IF numeric` · `Category quartiles`(여기서 `IF%`의 최솟값을
+  `상위`로) · `Best quartile`. **머리글 이름을 바꾸면 못 읽습니다.**
+- **시트 전체를 저장소에 올리지 않습니다** — Clarivate 데이터라서, 우리 논문 저널에 실제로 쓴 것만
+  `data/sheet_if_used.json`에 남깁니다(1,344개). 시트를 못 읽은 날은 이 값을 씁니다.
+- 논문에 `IF출처: 시트`·`IF연도`가 붙고, IF 칸에 마우스를 올리면 `JCR 2025 IF · 분야 상위 1.4% (공유 시트…)`로 보입니다.
+- 넣은 결과(2026-11-16): 논문 6,253편 중 **6,029편이 시트 IF**, 없는 것 224편. 등급 S 159→191 · A 441→691 ·
+  B 583→1,453. **보도자료 후보 217→315, 최상위 저널 참여 110→141.**
+  - 내려간 것도 있습니다 — `Int J Surg`는 시트 **9.0**(JCR 2025)이라 A→B입니다. 11/06 보도자료에는
+    `피인용지수 10.1`이라고 적혀 있어 **값이 다릅니다**(보도자료가 다른 해 값을 썼을 수 있음). 시트를 따릅니다.
+    `Adv Mater` 29.1·`Cell Mol Immunol` 23.9 등은 OpenAlex로 S였다가 IF 기준 A가 됐습니다.
+  - 시트에 **없는 저널**: `Comput Biol Med`·`Biomed Pharmacother`·`J Pers Med`·`JACC Case Rep`·`J Liver Cancer` 등.
+    국내 학회지·신생 저널이 대부분이지만 `Comput Biol Med`처럼 JCR에 있을 법한 것도 빠져 있어, 시트 쪽 수집을 확인해 볼 만합니다.
 
 ### 뉴스룸 IF (`newsroom_if.py`, 2026-11-06)
 

@@ -29,6 +29,7 @@ from value_judge import eligible as value_eligible, judge_value
 from staff_match import load_staff, match_staff
 from dept_ko import DEPT_KO, dept_ko
 import newsroom_if
+import sheet_if
 
 KST = timezone(timedelta(hours=9))
 NOW = datetime.now(KST)
@@ -430,10 +431,26 @@ def main():
         log("뉴스룸 IF 실패:", type(e).__name__, e)
     ntab = newsroom_if.table(ndb)
     n_used = set()
+    # 공유 구글 시트(S2Journal 전체 JCR) — 가장 먼저 본다. 못 읽은 날은 지난번에 쓴 값(data/sheet_if_used.json)으로
+    try:
+        s_issn, s_title = sheet_if.fetch()
+        s_ok = True
+    except Exception as e:
+        log("공유 시트 IF 실패:", type(e).__name__, e)
+        s_issn, s_title, s_ok = {}, {}, False
+    s_prev = sheet_if.load_used()
+    s_used = {}
     for p in papers.values():
         m = journal_metric(p, jcache)
-        j = jif_of(p, jif)
-        src = "JCR" if j else ""
+        j = None
+        sr = sheet_if.lookup(p, s_issn, s_title) if s_ok else s_prev.get(p["저널"])
+        if sr:
+            j = {"IF": sr["IF"], "상위": sr.get("상위"), "연도": sr.get("연도")}
+            src = "시트"
+            s_used[p["저널"]] = sr
+        else:
+            j = jif_of(p, jif)
+            src = "JCR" if j else ""
         if not j:
             nr = newsroom_if.lookup(p, ntab)
             if nr:
@@ -443,9 +460,12 @@ def main():
         p["지표"] = m["2y"] if m else None
         p.pop("IF출처", None)
         p.pop("IF근거", None)
+        p.pop("IF연도", None)
         if j:
             p["IF"], p["IF상위"] = j["IF"], j["상위"]
             p["IF출처"] = src
+            if j.get("연도"):
+                p["IF연도"] = j["연도"]
             if src == "뉴스룸":
                 p["IF근거"] = f"{j['날짜']}|{j['cntId']}"
         else:
@@ -476,6 +496,10 @@ def main():
         staff_names = old.get("한글이름병원", {})
         status["의료진명단"] = f"실패 ({type(e).__name__}) — 지난 매칭 유지"
 
+    if s_ok:
+        sheet_if.save_used(s_used, len(s_issn))
+    status["공유시트IF"] = (f"시트 저널 {len(s_issn):,}개 · 논문 저널에 쓰임 {len(s_used)}개" if s_ok
+                         else f"읽기 실패 — 지난번 값 {len(s_prev)}개로 대신")
     status["뉴스룸IF"] = f"보도자료 {len(ndb.get('보도자료', {}))}건(새로 {nnew}) · 저널 {len(ntab)}개 · 논문 저널에 쓰임 {len(n_used)}개"
     # 보도자료 의료진의 진료과 — 논문 소속(우리말로 바뀌면) → 홈페이지 명단(영문 매칭) → 홈페이지 명단(한글 이름이 한 과에만 있을 때)
     by_ko = {}
@@ -506,7 +530,7 @@ def main():
         # 화면의 '등급 기준' 설명이 이 값을 그대로 읽는다 — 기준을 바꾸면 설명도 함께 바뀐다
         "기준": {"S문턱": TIER_S_CITED, "A문턱": TIER_A_CITED, "B문턱": TIER_B_CITED,
                  "S_IF": TIER_S_IF, "A_IF": TIER_A_IF, "B_IF": TIER_B_IF,
-                 "JCR저널수": len(jif), "뉴스룸저널수": len(n_used), "JCR연도": sorted({r["연도"] for r in jif.values()}),
+                 "JCR저널수": len(jif), "뉴스룸저널수": len(n_used), "시트저널수": len(s_used), "JCR연도": sorted({r["연도"] for r in jif.values()}),
                  "S저널": sorted(TOP_S), "A저널": sorted(TOP_A), "A접두어": [x.strip() for x in TOP_A_PREFIX],
                  "보관일수": KEEP_DAYS, "시작일": FROM_DATE},
         "상태": status,

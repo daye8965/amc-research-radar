@@ -177,7 +177,7 @@ td{padding:10px 8px;vertical-align:top}
 <main>
   <div class="notice">
     PubMed에서 소속에 <b>서울아산병원</b>(Asan Medical Center · 울산의대 서울)이 적힌 논문을 매일 모읍니다.
-    저널 등급은 <b>JCR IF</b>를 먼저 쓰고, 없으면 우리 뉴스룸 보도자료에 적힌 <b>피인용지수</b>, 그것도 없으면 OpenAlex의 <b>최근 2년 평균 피인용</b>(IF보다 작게 나옵니다)으로 매깁니다. PMID를 누르면 복사됩니다.
+    저널 등급은 <b>JCR IF</b>(공유 시트 · S2Journal)를 먼저 쓰고, 없으면 우리 뉴스룸 보도자료에 적힌 <b>피인용지수</b>, 그것도 없으면 OpenAlex의 <b>최근 2년 평균 피인용</b>(IF보다 작게 나옵니다)으로 매깁니다. PMID를 누르면 복사됩니다.
     <ul class="card-help">
       <li><b>⭐ 보도자료 후보</b> — S·A 등급 저널이면서 우리 의료진이 <b>제1·교신·마지막 저자</b>인 연구 논문</li>
       <li><b>📣 보도자료 배포</b> — 우리가 실제로 보도자료를 낸 논문 (배포일이 지난 것만)</li>
@@ -321,6 +321,8 @@ function ifTitle(p) {
     const [d] = (p['IF근거'] || '').split('|');
     return `우리 뉴스룸 보도자료(${d})에 적힌 피인용지수 — S2Journal JCR 목록에 없는 저널`;
   }
+  if (p['IF출처'] === '시트')
+    return `JCR ${p['IF연도'] || ''} IF${p['IF상위'] != null ? ` · 분야 상위 ${p['IF상위']}%` : ''} (공유 시트 「저널 IF 공유 데이터 | S2Journal」)`;
   return `JCR IF · 분야 상위 ${p['IF상위']}%`;
 }
 function renderTierGuide() {
@@ -335,11 +337,12 @@ function renderTierGuide() {
   }
   const top = t => [...seen[t]].sort((a, b) => b[1].n - a[1].n).slice(0, 12)
     .map(([k, v]) => `${esc(k)} <span style="color:var(--muted)">${v.m} · ${v.n}편</span>`).join(', ');
-  const jcr = g['JCR저널수'] ? `JCR ${(g['JCR연도'] || []).join('·')} IF` : null;
+  const jcr = (g['JCR저널수'] || g['시트저널수']) ? 'JCR IF' : null;
   const ifOr = (t, c) => jcr ? `IF <b>${g[t]}</b> 이상 (IF가 없으면 2년 평균 피인용 <b>${g[c]}</b> 이상)` : `2년 평균 피인용 <b>${g[c]}</b> 이상`;
   $('tier-body').innerHTML = `
     등급은 <b>저널</b>로만 매깁니다. ${jcr
-      ? `숫자는 <b>${jcr}</b>(아산의학도서관 S2Journal, ${g['JCR저널수']}개 저널)를 먼저 쓰고,
+      ? `숫자는 <b>JCR IF</b>를 먼저 씁니다 — 아산의학도서관 S2Journal의 JCR 전체를 정리한 <b>공유 구글 시트</b>${g['시트저널수'] ? `(우리 논문 저널 ${g['시트저널수'].toLocaleString()}개에 적용)` : ''}를 매일 새로 읽고,
+         시트에 없으면 S2Journal 화면 인쇄본(${g['JCR저널수']}개 저널),
          거기 없으면 <b>우리 뉴스룸 보도자료에 적힌 피인용지수</b>${g['뉴스룸저널수'] ? `(${g['뉴스룸저널수']}개 저널)` : ''}를,
          그것도 없으면 OpenAlex의 <b>최근 2년 평균 피인용</b>을 씁니다. 피인용은 IF와 같은 방식이지만 값이 작게 나옵니다
          (예: NEJM IF 85.0 ↔ 피인용 33.2). 화면에는 <b>IF</b> 또는 <b>피인용</b>으로 구분해 적습니다.`
