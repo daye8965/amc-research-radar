@@ -2153,6 +2153,14 @@
 "연도": 2025,
 "저널": "Cerebrovascular Diseases Extra"
 },
+"Chemical science": {
+"IF": 8.1,
+"분야": "CHEMISTRY, MULTIDISCIPLINARY",
+"사분위": "Q1",
+"상위": 19.3,
+"연도": 2025,
+"저널": "Chemical Science"
+},
 "Chemistry, an Asian journal": {
 "IF": 3.2,
 "분야": "CHEMISTRY, MULTIDISCIPLINARY",
@@ -6401,6 +6409,14 @@
 "연도": 2025,
 "저널": "JOURNAL OF NEPHROLOGY"
 },
+"Journal of neural engineering": {
+"IF": 4.0,
+"분야": "NEUROSCIENCES; ENGINEERING, BIOMEDICAL",
+"사분위": "Q2",
+"상위": 32.9,
+"연도": 2025,
+"저널": "Journal of Neural Engineering"
+},
 "Journal of neuro-oncology": {
 "IF": 3.4,
 "분야": "CLINICAL NEUROLOGY; ONCOLOGY",
@@ -9265,6 +9281,14 @@
 "연도": 2025,
 "저널": "SCIENCE PROGRESS"
 },
+"Science robotics": {
+"IF": 25.5,
+"분야": "ROBOTICS",
+"사분위": "Q1",
+"상위": 1.0,
+"연도": 2025,
+"저널": "Science Robotics"
+},
 "Scientific data": {
 "IF": 7.2,
 "분야": "MULTIDISCIPLINARY SCIENCES",
@@ -10776,6 +10800,14 @@
 "상위": 42.5,
 "연도": 2025,
 "저널": "World Neurosurgery"
+},
+"Wound repair and regeneration : official publication of the Wound Healing Society [and] the European Tissue Repair Society": {
+"IF": 4.3,
+"분야": "SURGERY; DERMATOLOGY; MEDICINE, RESEARCH & EXPERIMENTAL; CELL BIOLOGY",
+"사분위": "Q1",
+"상위": 9.5,
+"연도": 2025,
+"저널": "WOUND REPAIR AND REGENERATION"
 },
 "Xenotransplantation": {
 "IF": 3.8,
